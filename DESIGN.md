@@ -38,7 +38,7 @@ A decentralized solver which works with 1inch Fusion+
    - `intents-vault`: The vault contract that manage the pool's asset within NEAR Intents.
 
 2. **Solver Management Server**
-   - A Rus based server that manages the lifecycle of TEE solvers
+   - A Rust based server that manages the lifecycle of TEE solvers
    - Handles solver deployment and monitoring for each liquidity pool
 
 ### Design Questions

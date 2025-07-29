@@ -1,6 +1,24 @@
 [profile.default]
-src = "src"
-out = "out"
+solc_version = "0.8.30"
+evm_version = "prague"
+
+ffi = true
+fs_permissions = [{access = "read-write", path = ".forge-snapshots/"}]
+
+via_ir = true
+# TODO create a release profile with optimizer true and time 9,999,999
+# optimizer = true
+
 libs = ["lib"]
+out = "out"
+src = "src"
+env = ".env"
+
+remappings = [
+    "@forge-std/=lib/forge-std/src/",
+    "@1inch/limit-order-protocol/=lib/limit-order-protocol/",
+    "@jincubator/the-compact-order-protocol/=lib/the-compact",
+    "@jincubator/tycho-execution=/lib/tycho-execution"
+]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
