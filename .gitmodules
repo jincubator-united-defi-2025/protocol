@@ -1,3 +1,15 @@
 [submodule "protocol/lib/forge-std"]
 	path = protocol/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "lib/limit-order-protocol"]
+	path = lib/limit-order-protocol
+	url = https://github.com/1inch/limit-order-protocol.git
+[submodule "lib/cross-chain-swap"]
+	path = lib/cross-chain-swap
+	url = https://github.com/1inch/cross-chain-swap.git
+[submodule "lib/the-compact"]
+	path = lib/the-compact
+	url = https://github.com/jincubator/the-compact.git
+[submodule "lib/tycho-execution"]
+	path = lib/tycho-execution
+	url = https://github.com/jincubator/tycho-execution.git
