@@ -1,8 +1,10 @@
-# Design
+# Design Unite Defi 2025 Jincubator
 
 ## Overview
 
-The protocol implements
+The protocol implements extensions to the 1inch limit-order-protocol. To enable ERC-6909 support, resource locking and enhanced price discovery. It also facilitates back running of swaps as part of Interaction Order Extensions.
+
+Stretch Goals include enhance price discovery and NEAR Fusion+ integration.
 
 ## Design Questions
 
