@@ -9,7 +9,9 @@ Stretch Goals include enhance price discovery and NEAR Fusion+ integration.
 ## Design Questions
 
 - Passing of [Extension Information](https://github.com/1inch/limit-order-protocol/blob/master/description.md#extensions-structure) when [building an order](https://github.com/1inch/limit-order-protocol/blob/master/description.md#how-to-build-an-order)
-- Custom Limit Orders should not be posted to official Limit Order API. Does this mean just use scripting or should we build out our own API
+- Custom Limit Orders should not be posted to official Limit Order API. [Answered](https://discord.com/channels/554623348622098432/1385673870941618348/1399699600515796992)
+  - Scripting is fine for the Hackathon
+  - We don't need to build out our own API
 - Relayer - contract or service
 - Resolver - contract or service
 
@@ -42,7 +44,7 @@ Stretch Goals include enhance price discovery and NEAR Fusion+ integration.
 
 ## Components
 
--
+- [Jincubator Near Fusion+](https://github.com/jincubator-united-defi-2025/near-fusion-plus): NEAR Fusion+ Smart contracts
 
 ### Foundational (git modules)
 
@@ -84,11 +86,23 @@ Price Discovery
 | [RateProviderOracle](src/adapter/rate/RateProviderOracle.sol)       | Onchain  | Rate   | Balancer rate providers | rate provider                                |
 | [FixedRateOracle](src/adapter/fixed/FixedRateOracle.sol)            | Onchain  | Rate   | Any                     | rate                                         |
 
+NEAR Integration
+
+- [Jincubator Near Fusion+](https://github.com/jincubator-united-defi-2025/near-fusion-plus)
+- [Cargo Near](https://github.com/near/cargo-near)
+- [Donation Examples](https://github.com/near-examples/donation-examples)
+
 ### Documentation
 
 - [Limit order protocol v4](https://github.com/1inch/limit-order-protocol/blob/master/description.md): Technical documentation for 1nch Limit Order Protocol including Order Extensions
 - [1inch OrderBook API](https://portal.1inch.dev/documentation/apis/orderbook/introduction): 1inch Orderbook API is using the 1inch Limit Order Protocol, which is a set of smart contracts that can work on any EVM-based blockchains. Key features of the protocol are extreme flexibility and high gas efficiency.
 - [1inch Fusion+ (intent-based atomic cross-chain swaps)](https://portal.1inch.dev/documentation/apis/swap/fusion-plus/introduction): built on the cross-chain-sdk
+- [1inch Cross-chain swaps - Fusion+ Tanner Moore](https://www.youtube.com/watch?v=EnHov0tCalU&t=860s)
+
+NEAR Integration
+
+- [Near Smart Contracts](https://dev.near.org/documentation/smart-contracts/what-is)
+- [NEAR Rust SDK Documentation](https://docs.near.org/sdk/rust/introduction)
 
 ### Prize Streams
 
