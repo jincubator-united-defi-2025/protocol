@@ -43,12 +43,9 @@ A decentralized solver which works with 1inch Fusion+
 
 ### Design Questions
 
-- Passing of [Extension Information](https://github.com/1inch/limit-order-protocol/blob/master/description.md#extensions-structure) when [building an order](https://github.com/1inch/limit-order-protocol/blob/master/description.md#how-to-build-an-order)
 - Custom Limit Orders should not be posted to official Limit Order API. [Answered](https://discord.com/channels/554623348622098432/1385673870941618348/1399699600515796992)
   - Scripting is fine for the Hackathon
   - We don't need to build out our own API
-- Resolver - Contract as part of protocol?
-- Relayer - Is relayer a contract or service?
 
 ## Implementation Details
 
@@ -143,6 +140,7 @@ NEAR Integration
 - [1inch OrderBook API](https://portal.1inch.dev/documentation/apis/orderbook/introduction): 1inch Orderbook API is using the 1inch Limit Order Protocol, which is a set of smart contracts that can work on any EVM-based blockchains. Key features of the protocol are extreme flexibility and high gas efficiency.
 - [1inch Fusion+ (intent-based atomic cross-chain swaps)](https://portal.1inch.dev/documentation/apis/swap/fusion-plus/introduction): built on the cross-chain-sdk
 - [1inch Cross-chain swaps - Fusion+ Tanner Moore](https://www.youtube.com/watch?v=EnHov0tCalU&t=860s)
+- Passing of [Extension Information](https://github.com/1inch/limit-order-protocol/blob/master/description.md#extensions-structure) when [building an order](https://github.com/1inch/limit-order-protocol/blob/master/description.md#how-to-build-an-order)
 
 NEAR Integration
 
