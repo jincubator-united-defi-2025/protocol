@@ -67,6 +67,8 @@ A decentralized solver which works with 1inch Fusion+
       - ERC-6909 Settlement (including EIP-712 Signature Verification)
       - BackRunning Of Order
 
+Note: For demonstration purposes we can use order and fulfillment via local scripts. It is recommended to use [Tenderly Virtual Testnets](https://tenderly.co/virtual-testnets) so that judges have visibility. (This is preferred over anvil).
+
 ### Price Discovery Improvements
 
 - Tycho Indexing: For Streaming of State Changes of DeFi Protocols

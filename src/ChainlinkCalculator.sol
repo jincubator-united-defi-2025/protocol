@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.30;
 
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import "../interfaces/IOrderMixin.sol";
-import "../interfaces/IAmountGetter.sol";
+import "@1inch/limit-order-protocol/contracts/interfaces/IOrderMixin.sol";
+import "@1inch/limit-order-protocol/contracts/interfaces/IAmountGetter.sol";
 
 // solhint-disable not-rely-on-time
 

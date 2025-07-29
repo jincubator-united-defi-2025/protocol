@@ -13,3 +13,6 @@
 [submodule "lib/tycho-execution"]
 	path = lib/tycho-execution
 	url = https://github.com/jincubator/tycho-execution.git
+[submodule "lib/chainlink"]
+	path = lib/chainlink
+	url = https://github.com/smartcontractkit/chainlink-evm.git

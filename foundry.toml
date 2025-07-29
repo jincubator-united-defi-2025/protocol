@@ -18,7 +18,9 @@ remappings = [
     "@forge-std/=lib/forge-std/src/",
     "@1inch/limit-order-protocol/=lib/limit-order-protocol/",
     "@jincubator/the-compact-order-protocol/=lib/the-compact",
-    "@jincubator/tycho-execution=/lib/tycho-execution"
+    "@jincubator/tycho-execution=/lib/tycho-execution",
+    "@openzeppelin/=lib/tycho-execution/foundry/lib/openzeppelin-contracts/",
+    "@chainlink=lib/chainlink"
 ]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
