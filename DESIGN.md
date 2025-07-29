@@ -6,14 +6,51 @@ The protocol implements extensions to the 1inch limit-order-protocol. To enable 
 
 Stretch Goals include enhance price discovery and NEAR Fusion+ integration.
 
-## Design Questions
+## Design
+
+For Unite Defi we are working on 3 separate but compatible streams.
+
+### Limit Order Protocol
+
+Here are the Key Features Under Consideration
+
+- Price Discovery: Integrating Pyth Oracles such as Redstone to improve Price Discovery
+- Stop Loss Orders: Implementing a Holistic Advanced Limit Order (HALO) using a Predicate which passes price criteria for execution
+- ERC-6909 Support: We implement the ability to Lock Resources in an ERC-6909 compatible Extension
+- No Liquidity Solving (Same Chain Only): Provide the ability for Resolvers to use the Locked Resources as part of the Solve
+- Portfolio Management: We implement the ability to rebalance the maker or takers assets during the fill with an Interaction
+
+### Near Fusion+
+
+We Integrate Near and 1inch Fusion (see [near-fusion-plus](https://github.com/jincubator-united-defi-2025/near-fusion-plus))
+
+- Near Contracts for hash lock and time lock functionality
+- Swap Functionality between Ethereum and Near via Fusion Plus
+- Demonstration of bidirectional token transfers between Ethereum and NEAR
+
+### Near Solver Built with NEAR's Shade Agent Framework
+
+A decentralized solver which works with 1inch Fusion+
+
+1. **Smart Contracts**
+
+   - `solver-registry`: Support liquidity pools creation. Manage registration and verification of TEE solvers for each liquidity pool.
+   - `intents-vault`: The vault contract that manage the pool's asset within NEAR Intents.
+
+2. **Solver Management Server**
+   - A Rus based server that manages the lifecycle of TEE solvers
+   - Handles solver deployment and monitoring for each liquidity pool
+
+### Design Questions
 
 - Passing of [Extension Information](https://github.com/1inch/limit-order-protocol/blob/master/description.md#extensions-structure) when [building an order](https://github.com/1inch/limit-order-protocol/blob/master/description.md#how-to-build-an-order)
 - Custom Limit Orders should not be posted to official Limit Order API. [Answered](https://discord.com/channels/554623348622098432/1385673870941618348/1399699600515796992)
   - Scripting is fine for the Hackathon
   - We don't need to build out our own API
-- Relayer - contract or service
-- Resolver - contract or service
+- Resolver - Contract as part of protocol?
+- Relayer - Is relayer a contract or service?
+
+## Implementation Details
 
 ### Limit Order Protocol Improvements
 
@@ -22,7 +59,6 @@ Stretch Goals include enhance price discovery and NEAR Fusion+ integration.
   - [ChainLink Example](https://github.com/1inch/limit-order-protocol/blob/master/test/ChainLinkExample.js)
   - [Order Creation Logic to Populate Order Extension Information](https://github.com/1inch/limit-order-protocol/blob/master/description.md#order-extensions)
   - [Order Extensions](https://github.com/1inch/limit-order-protocol/blob/master/description.md) : [Extensions Code](https://github.com/1inch/limit-order-protocol/tree/master/contracts/extensions)
-    - []
     - ERC-6909 extension similar to [ERC1155PROXY.sol](https://github.com/1inch/limit-order-protocol/blob/master/contracts/extensions/ERC1155Proxy.sol)
       - Resource Locking Functionality integrating with [the-compact](https://github.com/uniswap/the-compact)
     - Price Discovery
@@ -42,7 +78,9 @@ Stretch Goals include enhance price discovery and NEAR Fusion+ integration.
 - Relayer
 - Resolver
 
-## Components
+### Near Solver Built with NEAR's Shade Agent Framework
+
+### Components
 
 - [Jincubator Near Fusion+](https://github.com/jincubator-united-defi-2025/near-fusion-plus): NEAR Fusion+ Smart contracts
 
@@ -91,6 +129,11 @@ NEAR Integration
 - [Jincubator Near Fusion+](https://github.com/jincubator-united-defi-2025/near-fusion-plus)
 - [Cargo Near](https://github.com/near/cargo-near)
 - [Donation Examples](https://github.com/near-examples/donation-examples)
+- Frontend: `npx create-near-app@latest`
+- Solver manager and deployer https://github.com/jincubator-united-defi-2025/tee-solver
+- Solver https://github.com/jincubator-united-defi-2025/near-intents-tee-amm-solver
+- [Near Intents](https://docs.near.org/chain-abstraction/intents/overview)
+  - https://near-intents.org/
 
 ### Documentation
 
@@ -106,7 +149,7 @@ NEAR Integration
 
 ### Prize Streams
 
-#### 🍾 Expand Limit Order Protocol ⸺ $65,000
+#### 🍾 Expand Limit Order Protocol ⸺ $65,000 ($10,000 x 3, $7,000 x 3, $3500 x 4 )
 
 1inch Limit Order Protocol is an onchain orderbook that can be extended to do much more. Build advanced strategies and hooks for the 1inch Limit Order Protocol like options, concentrated liquidity, TWAP swaps, etc.
 
@@ -120,7 +163,7 @@ Stretch goals (not hard requirements):
 
 - UI
 
-#### 🌐 Extend Fusion+ to Near ⸺ $32,000
+#### 🌐 Extend Fusion+ to Near ⸺ $32,000 ($12,000, $7,500, $5,000, 4,000, $3500)
 
 Build a novel extension for 1inch Cross-chain Swap (Fusion+) that enables swaps between Ethereum and Near.
 
@@ -135,3 +178,20 @@ Stretch goals (not hard requirements):
 - UI
 - Enable partial fills
 - Relayer and resolver
+
+#### 🔗 Best 1inch Fusion+ Solver Built with NEAR's Shade Agent Framework ⸺ $10,000 (2x $5000)
+
+Build a decentralized solver that integrates with 1inch Fusion+ for cross-chain swaps using NEAR's Shade Agent Framework and Trusted Execution Environment.
+
+There is an existing decentralized NEAR Intents solver here:
+
+- Solver manager and deployer https://github.com/Near-One/tee-solver/
+- Solver https://github.com/think-in-universe/near-intents-tee-amm-solver/tree/feat/tee-solver
+
+It listens for intents, generates quotes, and submits them for execution on NEAR Intents. Your task is to build a similar system that works with 1inch Fusion+ and its meta-order format. Make sure the solver is created using NEAR’s Shade Agent Framework and is deployed in a Trusted Execution Environment.
+
+The Shade Agent Framework allows you to build decentralized solvers, enabling users to delegate and provide liquidity to solvers without requiring trust that the solver will behave correctly or having to set up their own solver.
+
+Qualification Requirements:
+
+Your solver must listen for quote requests (mocked or real), produce valid 1inch Fusion meta-orders using NEAR's Chain Signatures, include comprehensive documentation with setup instructions, and demonstrate end-to-end functionality. Bonus points for modular architecture that extends to other protocols.
