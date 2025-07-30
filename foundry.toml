@@ -16,7 +16,7 @@ env = ".env"
 
 remappings = [
     "@forge-std/=lib/forge-std/src/",
-    "@1inch/limit-order-protocol/=lib/limit-order-protocol/",
+    "@jincubator/limit-order-protocol/=lib/limit-order-protocol/",
     "@1inch/solidity-utils/=lib/solidity-utils/",
     "@jincubator/the-compact-order-protocol/=lib/the-compact",
     "@jincubator/tycho-execution=/lib/tycho-execution",
