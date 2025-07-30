@@ -1,6 +1,6 @@
 [profile.default]
-solc_version = "0.8.30"
-evm_version = "prague"
+solc_version = "0.8.23"
+evm_version = "shanghai"
 
 ffi = true
 fs_permissions = [{access = "read-write", path = ".forge-snapshots/"}]
@@ -17,6 +17,7 @@ env = ".env"
 remappings = [
     "@forge-std/=lib/forge-std/src/",
     "@1inch/limit-order-protocol/=lib/limit-order-protocol/",
+    "@1inch/solidity-utils/=lib/solidity-utils/",
     "@jincubator/the-compact-order-protocol/=lib/the-compact",
     "@jincubator/tycho-execution=/lib/tycho-execution",
     "@openzeppelin/=lib/tycho-execution/foundry/lib/openzeppelin-contracts/",
