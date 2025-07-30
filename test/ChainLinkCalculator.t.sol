@@ -11,13 +11,17 @@ contract ChainLinkCalculatorTest is Test, Deployers {
         // counter.setNumber(0);
     }
 
-    // function test_Increment() public {
-    //     counter.increment();
-    //     assertEq(counter.number(), 1);
-    // }
+    function test_eth_to_dai_chainlink_order() public {
+        // chainlink rate is 1 eth = 4000 dai
 
-    // function testFuzz_SetNumber(uint256 x) public {
-    //     counter.setNumber(x);
-    //     assertEq(counter.number(), x);
-    // }
+        // function test_Increment() public {
+        //     counter.increment();
+        //     assertEq(counter.number(), 1);
+        // }
+
+        // function testFuzz_SetNumber(uint256 x) public {
+        //     counter.setNumber(x);
+        //     assertEq(counter.number(), x);
+        // }
+    }
 }

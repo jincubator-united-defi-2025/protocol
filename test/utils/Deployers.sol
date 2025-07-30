@@ -8,6 +8,8 @@ import {ERC20} from "the-compact/lib/solady/src/tokens/ERC20.sol";
 import {WETH} from "the-compact/lib/solady/src/tokens/WETH.sol";
 import {IWETH} from "@1inch/solidity-utils/contracts/interfaces/IWETH.sol";
 import {LimitOrderProtocol} from "@1inch/limit-order-protocol/contracts/LimitOrderProtocol.sol";
+import {ChainlinkCalculator} from "src/ChainlinkCalculator.sol";
+import {AggregatorMock} from "@1inch/limit-order-protocol/contracts/mocks/AggregatorMock.sol";
 
 contract Deployers is Test {
     // Helpful Test Constants
@@ -20,6 +22,9 @@ contract Deployers is Test {
     MockERC20 public inch;
     MockERC20 public usdc;
     LimitOrderProtocol public swap;
+    ChainlinkCalculator public chainlinkCalculator;
+    AggregatorMock public daiOracle;
+    AggregatorMock public inchOracle;
 
     function deploySwapTokens() internal {
         dai = new MockERC20("Test Token", "TEST", 18);
@@ -35,5 +40,8 @@ contract Deployers is Test {
         chainLinkCalculator = new ChainlinkCalculator();
         deploySwapTokens();
         swap = new LimitOrderProtocol(IWETH(address(weth)));
+        chainlinkCalculator = new ChainlinkCalculator();
+        daiOracle = new AggregatorMock(1000000000000000000);
+        inchOracle = new AggregatorMock(1000000000000000000);
     }
 }
