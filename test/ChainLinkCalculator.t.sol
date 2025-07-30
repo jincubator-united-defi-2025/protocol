@@ -43,6 +43,9 @@ contract ChainLinkCalculatorTest is Test, Deployers {
     }
 
     function test_eth_to_dai_chainlink_order() public {
+        // Advance block timestamp to ensure oracle data is considered fresh
+        vm.warp(block.timestamp + 99 seconds);
+
         // Setup oracles with specific prices
         // DAI oracle: 1 ETH = 4000 DAI (0.00025 ETH per DAI)
         daiOracle = new AggregatorMock(0.00025 ether);
@@ -128,6 +131,9 @@ contract ChainLinkCalculatorTest is Test, Deployers {
     }
 
     function test_dai_to_eth_chainlink_order() public {
+        // Advance block timestamp to ensure oracle data is considered fresh
+        vm.warp(block.timestamp + 99 seconds);
+
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
 
@@ -209,6 +215,9 @@ contract ChainLinkCalculatorTest is Test, Deployers {
     }
 
     function test_dai_to_1inch_chainlink_order_takingAmountData() public {
+        // Advance block timestamp to ensure oracle data is considered fresh
+        vm.warp(block.timestamp + 99 seconds);
+
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether); // 1 ETH = 4000 DAI
         inchOracle = new AggregatorMock(1577615249227853); // 1 INCH = 0.0001577615249227853 ETH
@@ -303,6 +312,11 @@ contract ChainLinkCalculatorTest is Test, Deployers {
     }
 
     function test_dai_to_1inch_chainlink_order_makingAmountData() public {
+        // Advance block timestamp to ensure oracle data is considered fresh
+        // The ChainlinkCalculator checks if updatedAt + 4 hours < block.timestamp
+        // Minimum advancement needed: 99 seconds
+        vm.warp(block.timestamp + 99 seconds);
+
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether); // 1 ETH = 4000 DAI
         inchOracle = new AggregatorMock(1577615249227853); // 1 INCH = 0.0001577615249227853 ETH
@@ -397,6 +411,9 @@ contract ChainLinkCalculatorTest is Test, Deployers {
     }
 
     function test_dai_to_1inch_stop_loss_order() public {
+        // Advance block timestamp to ensure oracle data is considered fresh
+        vm.warp(block.timestamp + 99 seconds);
+
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
         inchOracle = new AggregatorMock(1577615249227853);
@@ -476,6 +493,9 @@ contract ChainLinkCalculatorTest is Test, Deployers {
     }
 
     function test_dai_to_1inch_stop_loss_order_predicate_invalid() public {
+        // Advance block timestamp to ensure oracle data is considered fresh
+        vm.warp(block.timestamp + 99 seconds);
+
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
         inchOracle = new AggregatorMock(1577615249227853);
@@ -544,6 +564,9 @@ contract ChainLinkCalculatorTest is Test, Deployers {
     }
 
     function test_eth_to_dai_stop_loss_order() public {
+        // Advance block timestamp to ensure oracle data is considered fresh
+        vm.warp(block.timestamp + 99 seconds);
+
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
 
