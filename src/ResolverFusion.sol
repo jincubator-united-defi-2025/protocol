@@ -3,6 +3,7 @@
 // 1inch does not assume responsibility for its security, suitability, or fitness for any specific use.
 // Any party using this code is solely responsible for conducting independent audits before deployment.
 // Copied from https://github.com/1inch/fusion-resolver-example/blob/main/contracts/ResolverExample.sol
+// Integrated with
 
 pragma solidity ^0.8.20;
 

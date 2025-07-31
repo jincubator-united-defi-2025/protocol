@@ -125,18 +125,18 @@ Price Discovery
 - [Yolo Protocol Oracle](https://github.com/YOLO-Protocol/yolo-core-v0/tree/main/src/oracles)
 - [Euler Price Oracle](https://github.com/euler-xyz/euler-price-oracle): See adapters below
 
-| Adapter                                                             | Type     | Method | Supported Pairs         | Parameters                                   |
-| ------------------------------------------------------------------- | -------- | ------ | ----------------------- | -------------------------------------------- |
-| [ChainlinkOracle](src/adapter/chainlink/ChainlinkOracle.sol)        | External | Push   | Provider feeds          | feed, max staleness                          |
-| [ChronicleOracle](src/adapter/chainlink/ChronicleOracle.sol)        | External | Push   | Provider feeds          | feed, max staleness                          |
-| [PythOracle](src/adapter/pyth/PythOracle.sol)                       | External | Pull   | Provider feeds          | feed, max staleness, max confidence interval |
-| [RedstoneCoreOracle](src/adapter/redstone/RedstoneCoreOracle.sol)   | External | Pull   | Provider feeds          | feed, max staleness, cache ttl               |
-| [LidoOracle](src/adapter/lido/LidoOracle.sol)                       | Onchain  | Rate   | wstETH/stETH            | -                                            |
-| [LidoFundamentalOracle](src/adapter/lido/LidoFundamentalOracle.sol) | Onchain  | Rate   | wstETH/ETH              | -                                            |
-| [UniswapV3Oracle](src/adapter/uniswap/UniswapV3Oracle.sol)          | Onchain  | TWAP   | UniV3 pools             | fee, twap window                             |
-| [PendleOracle](src/adapter/pendle/PendleOracle.sol)                 | Onchain  | TWAP   | Pendle markets          | pendle market, twap window                   |
-| [RateProviderOracle](src/adapter/rate/RateProviderOracle.sol)       | Onchain  | Rate   | Balancer rate providers | rate provider                                |
-| [FixedRateOracle](src/adapter/fixed/FixedRateOracle.sol)            | Onchain  | Rate   | Any                     | rate                                         |
+| Adapter                                                                                                                         | Type     | Method | Supported Pairs         | Parameters                                   |
+| ------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ----------------------- | -------------------------------------------- |
+| [ChainlinkOracle](https://github.com/euler-xyz/euler-price-oracle/blob/master/src/adapter/chainlink/ChainlinkOracle.sol)        | External | Push   | Provider feeds          | feed, max staleness                          |
+| [ChronicleOracle](https://github.com/euler-xyz/euler-price-oracle/blob/master/src/adapter/chainlink/ChronicleOracle.sol)        | External | Push   | Provider feeds          | feed, max staleness                          |
+| [PythOracle](https://github.com/euler-xyz/euler-price-oracle/blob/master/src/adapter/pyth/PythOracle.sol)                       | External | Pull   | Provider feeds          | feed, max staleness, max confidence interval |
+| [RedstoneCoreOracle](https://github.com/euler-xyz/euler-price-oracle/blob/master/src/adapter/redstone/RedstoneCoreOracle.sol)   | External | Pull   | Provider feeds          | feed, max staleness, cache ttl               |
+| [LidoOracle](https://github.com/euler-xyz/euler-price-oracle/blob/master/src/adapter/lido/LidoOracle.sol)                       | Onchain  | Rate   | wstETH/stETH            | -                                            |
+| [LidoFundamentalOracle](https://github.com/euler-xyz/euler-price-oracle/blob/master/src/adapter/lido/LidoFundamentalOracle.sol) | Onchain  | Rate   | wstETH/ETH              | -                                            |
+| [UniswapV3Oracle](https://github.com/euler-xyz/euler-price-oracle/blob/master/src/adapter/uniswap/UniswapV3Oracle.sol)          | Onchain  | TWAP   | UniV3 pools             | fee, twap window                             |
+| [PendleOracle](https://github.com/euler-xyz/euler-price-oracle/blob/master/src/adapter/pendle/PendleOracle.sol)                 | Onchain  | TWAP   | Pendle markets          | pendle market, twap window                   |
+| [RateProviderOracle](https://github.com/euler-xyz/euler-price-oracle/blob/master/src/adapter/rate/RateProviderOracle.sol)       | Onchain  | Rate   | Balancer rate providers | rate provider                                |
+| [FixedRateOracle](https://github.com/euler-xyz/euler-price-oracle/blob/master/src/adapter/fixed/FixedRateOracle.sol)            | Onchain  | Rate   | Any                     | rate                                         |
 
 NEAR Integration
 
