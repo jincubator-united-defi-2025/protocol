@@ -77,7 +77,8 @@ Note: For demonstration purposes we can use order and fulfillment via local scri
 ### Fusion+ to Near Implementations (Stretch Goal)
 
 - Relayer
-- Resolver
+- [Resolver](https://github.com/1inch/cross-chain-resolver-example/blob/master/contracts/src/Resolver.sol)
+  - [Fusion Resolver Example](https://github.com/1inch/fusion-resolver-example/blob/main/contracts/ResolverExample.sol) - don't need this one
 
 ### Near Solver Built with NEAR's Shade Agent Framework
 
@@ -93,6 +94,18 @@ Note: For demonstration purposes we can use order and fulfillment via local scri
 - [Tycho Execution](https://github.com/propeller-heads/tycho-execution): Tycho Execution makes it easy to trade on different DEXs by handling the complex encoding for you. Instead of creating custom code for each DEX, you get a simple, ready-to-use tool that generates the necessary data to execute trades. It's designed to be safe, straightforward, and quick to set up, so anyone can start trading without extra effort.
 
 ## References
+
+### Compatability
+
+LimitOrderProtocol requires solidity 0.8.23 and tycho-execution having to be greater than 0.8.26.
+
+We introduce a shim for LimitOrderProtocol in test/helpers
+
+- DeployerHelper.sol: helper function for deploys using create2
+- LimitOrderProtocolManager.sol: deploys the original(0.8.23) LimitOrderProtocol using bytecode
+- ILimitOrderProtocol.sol: an interface for LimitOrderProtocol compatible with solidity ^0.8.23
+- Deployers.sol: uses ILimitOrderProtocol with the LimitOrderProtocol deployed by LimitOrderProtocolManager
+- AggrgratorMock.sol: we copy a version of this to `src\mocks\1inch` and make compatible with solidity ^0.8.23
 
 ### Code
 
@@ -148,6 +161,7 @@ NEAR Integration
 
 - [Near Smart Contracts](https://dev.near.org/documentation/smart-contracts/what-is)
 - [NEAR Rust SDK Documentation](https://docs.near.org/sdk/rust/introduction)
+- [NEAR Market Maker](https://docs.near-intents.org/near-intents/market-makers): We are adding Fusion as a Market Maker on NEAR
 
 ### Prize Streams
 
