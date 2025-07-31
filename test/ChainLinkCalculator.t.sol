@@ -14,6 +14,112 @@ import {IOrderMixin} from "@jincubator/limit-order-protocol/contracts/interfaces
 import {Address} from "@1inch/solidity-utils/contracts/libraries/AddressLib.sol";
 import {MakerTraits} from "@jincubator/limit-order-protocol/contracts/libraries/MakerTraitsLib.sol";
 import {TakerTraits} from "@jincubator/limit-order-protocol/contracts/libraries/TakerTraitsLib.sol";
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+
+// Custom mock for testing different decimals
+contract AggregatorMockWithDecimals is AggregatorV3Interface {
+    error NoDataPresent();
+
+    int256 private immutable _ANSWER;
+    uint8 private immutable _DECIMALS;
+
+    constructor(int256 answer, uint8 decimals_) {
+        _ANSWER = answer;
+        _DECIMALS = decimals_;
+    }
+
+    function decimals() external view returns (uint8) {
+        return _DECIMALS;
+    }
+
+    function description() external pure returns (string memory) {
+        return "AggregatorMockWithDecimals";
+    }
+
+    function version() external pure returns (uint256) {
+        return 1;
+    }
+
+    function getRoundData(uint80 _roundId)
+        external
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+    {
+        if (_roundId != 0) revert NoDataPresent();
+        return latestRoundData();
+    }
+
+    function latestRoundData()
+        public
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+    {
+        // solhint-disable-next-line not-rely-on-time
+        return (0, _ANSWER, block.timestamp - 100, block.timestamp - 100, 0);
+    }
+
+    function latestAnswer() public view returns (int256) {
+        return _ANSWER;
+    }
+
+    function latestTimestamp() public view returns (uint256) {
+        // solhint-disable-next-line not-rely-on-time
+        return block.timestamp - 100;
+    }
+
+    function latestRound() external pure returns (uint256) {
+        return 0;
+    }
+
+    function getAnswer(uint256 roundId) external view returns (int256) {
+        if (roundId != 0) revert NoDataPresent();
+        return latestAnswer();
+    }
+
+    function getTimestamp(uint256 roundId) external view returns (uint256) {
+        if (roundId != 0) revert NoDataPresent();
+        return latestTimestamp();
+    }
+}
+
+// Custom mock for testing stale oracle data
+contract StaleAggregatorMock is AggregatorV3Interface {
+    int256 private immutable _ANSWER;
+    uint256 private immutable _OLD_TIMESTAMP;
+
+    constructor(int256 answer) {
+        _ANSWER = answer;
+        _OLD_TIMESTAMP = 1000; // Fixed old timestamp
+    }
+
+    function decimals() external pure returns (uint8) {
+        return 18;
+    }
+
+    function description() external pure returns (string memory) {
+        return "StaleAggregatorMock";
+    }
+
+    function version() external pure returns (uint256) {
+        return 1;
+    }
+
+    function getRoundData(uint80 _roundId)
+        external
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+    {
+        return latestRoundData();
+    }
+
+    function latestRoundData()
+        public
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+    {
+        return (0, _ANSWER, _OLD_TIMESTAMP, _OLD_TIMESTAMP, 0);
+    }
+}
 
 contract ChainLinkCalculatorTest is Test, Deployers {
     using OrderUtils for *;
@@ -787,5 +893,378 @@ contract ChainLinkCalculatorTest is Test, Deployers {
     function getOracleAnswer(AggregatorMock oracle) internal view returns (uint256) {
         (, int256 answer,,,) = oracle.latestRoundData();
         return uint256(answer);
+    }
+
+    function test_stale_oracle_data_reverts() public {
+        // Setup oracle with old data
+        StaleAggregatorMock staleOracle = new StaleAggregatorMock(0.00025 ether);
+
+        // Advance time to make oracle data stale (more than 4 hours)
+        vm.warp(block.timestamp + 5 hours);
+
+        // Test direct function call to verify the stale check
+        bytes memory blob = abi.encodePacked(
+            bytes1(0x00), // flags (no inverse, no double price)
+            address(staleOracle), // oracle address
+            uint256(990000000) // spread
+        );
+
+        vm.expectRevert(ChainlinkCalculator.StaleOraclePrice.selector);
+        chainlinkCalculator.getMakingAmount(
+            IOrderMixin.Order({
+                salt: 0,
+                maker: Address.wrap(0),
+                receiver: Address.wrap(0),
+                makerAsset: Address.wrap(0),
+                takerAsset: Address.wrap(0),
+                makingAmount: 0,
+                takingAmount: 0,
+                makerTraits: MakerTraits.wrap(0)
+            }),
+            "", // extension
+            bytes32(0), // orderHash
+            address(0), // taker
+            1000, // takingAmount
+            0, // remainingMakingAmount
+            blob // extraData
+        );
+    }
+
+    function test_different_oracle_decimals_reverts() public {
+        // Advance block timestamp to ensure oracle data is considered fresh
+        vm.warp(block.timestamp + 99 seconds);
+
+        // Create oracles with different decimals
+        AggregatorMockWithDecimals oracle1 = new AggregatorMockWithDecimals(1000000000000000000, 18); // 18 decimals
+        AggregatorMockWithDecimals oracle2 = new AggregatorMockWithDecimals(1000000, 6); // 6 decimals (USDC-like)
+
+        // Test direct function call to verify the revert
+        vm.expectRevert(ChainlinkCalculator.DifferentOracleDecimals.selector);
+        chainlinkCalculator.doublePrice(oracle1, oracle2, 0, 1000);
+    }
+
+    function test_invalid_calldata_length_reverts() public {
+        // Advance block timestamp to ensure oracle data is considered fresh
+        vm.warp(block.timestamp + 99 seconds);
+
+        // Setup oracle
+        daiOracle = new AggregatorMock(0.00025 ether);
+        address chainlinkCalcAddress = address(chainlinkCalculator);
+        address oracleAddress = address(daiOracle);
+
+        // Create invalid calldata (too short)
+        bytes memory invalidMakingAmountData = abi.encodePacked(
+            chainlinkCalcAddress,
+            bytes1(0x00), // flags
+            oracleAddress // missing spread
+        );
+
+        // Build order with invalid calldata
+        OrderUtils.Order memory baseOrder = OrderUtils.Order({
+            salt: 0,
+            maker: addr1,
+            receiver: address(0),
+            makerAsset: address(weth),
+            takerAsset: address(dai),
+            makingAmount: 1 ether,
+            takingAmount: 4000 ether,
+            makerTraits: OrderUtils.buildMakerTraits(address(0), false, true, true, false, false, 0, 0, 0)
+        });
+
+        (OrderUtils.Order memory order, bytes memory extension) = OrderUtils.buildOrder(
+            baseOrder,
+            "", // makerAssetSuffix
+            "", // takerAssetSuffix
+            invalidMakingAmountData,
+            "", // takingAmountData
+            "", // predicate
+            "", // permit
+            "", // preInteraction
+            "", // postInteraction
+            "" // customData
+        );
+
+        // Sign the order
+        bytes32 orderData = swap.hashOrder(convertOrder(order));
+        (bytes32 r, bytes32 vs) = signOrder(orderData);
+
+        // Build taker traits
+        OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
+            false, // makingAmount
+            false, // unwrapWeth
+            false, // skipMakerPermit
+            false, // usePermit2
+            "", // target
+            extension, // extension
+            "", // interaction
+            0.99 ether // threshold
+        );
+
+        // Expect the transaction to revert due to invalid calldata
+        vm.prank(addr2);
+        vm.expectRevert();
+        swap.fillOrderArgs(
+            convertOrder(order), r, vs, 4000 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args
+        );
+    }
+
+    function test_decimals_scale_positive() public {
+        // Advance block timestamp to ensure oracle data is considered fresh
+        vm.warp(block.timestamp + 99 seconds);
+
+        // Setup oracles with specific prices
+        daiOracle = new AggregatorMock(0.00025 ether); // 1 ETH = 4000 DAI
+        inchOracle = new AggregatorMock(1577615249227853); // 1 INCH = 0.0001577615249227853 ETH
+
+        address chainlinkCalcAddress = address(chainlinkCalculator);
+        address oracleAddress1 = address(inchOracle);
+        address oracleAddress2 = address(daiOracle);
+
+        uint256 makingAmount = 100 ether;
+        uint256 takingAmount = 632 ether;
+        int256 decimalsScale = 2; // Positive scale
+        uint256 takingSpread = 1010000000; // taker offset is 1.01
+
+        // Build order with double price data and positive decimals scale
+        OrderUtils.Order memory baseOrder = OrderUtils.Order({
+            salt: 0,
+            maker: addr1,
+            receiver: address(0),
+            makerAsset: address(inch),
+            takerAsset: address(dai),
+            makingAmount: makingAmount,
+            takingAmount: takingAmount,
+            makerTraits: OrderUtils.buildMakerTraits(address(0), false, true, true, false, false, 0, 0, 0)
+        });
+
+        bytes memory makingAmountData = buildDoublePriceCalldata(
+            chainlinkCalcAddress,
+            oracleAddress2, // DAI oracle
+            oracleAddress1, // INCH oracle
+            decimalsScale,
+            990000000 // maker offset is 0.99
+        );
+
+        bytes memory takingAmountData = buildDoublePriceCalldata(
+            chainlinkCalcAddress,
+            oracleAddress1, // INCH oracle
+            oracleAddress2, // DAI oracle
+            decimalsScale,
+            takingSpread
+        );
+
+        (OrderUtils.Order memory order, bytes memory extension) = OrderUtils.buildOrder(
+            baseOrder,
+            "", // makerAssetSuffix
+            "", // takerAssetSuffix
+            makingAmountData,
+            takingAmountData,
+            "", // predicate
+            "", // permit
+            "", // preInteraction
+            "", // postInteraction
+            "" // customData
+        );
+
+        // Sign the order
+        bytes32 orderData = swap.hashOrder(convertOrder(order));
+        (bytes32 r, bytes32 vs) = signOrder(orderData);
+
+        // Build taker traits with makingAmount flag
+        OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
+            true, // makingAmount
+            false, // unwrapWeth
+            false, // skipMakerPermit
+            false, // usePermit2
+            "", // target
+            extension, // extension
+            "", // interaction
+            takingAmount * takingSpread / 1e9 * 100 + 0.01 ether // threshold with scale factor
+        );
+
+        // Record initial balances
+        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
+        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
+        uint256 addrInchBalanceBefore = inch.balanceOf(addr2);
+        uint256 addr1InchBalanceBefore = inch.balanceOf(addr1);
+
+        // Fill the order
+        vm.prank(addr2);
+        swap.fillOrderArgs(
+            convertOrder(order), r, vs, makingAmount, TakerTraits.wrap(takerTraits.traits), takerTraits.args
+        );
+
+        // Calculate expected taking amount based on oracle prices with decimals scale
+        uint256 realTakingAmount =
+            makingAmount * takingSpread / 1e9 * (getOracleAnswer(inchOracle) * 100) / getOracleAnswer(daiOracle);
+
+        // Verify balance changes
+        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore - realTakingAmount);
+        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore + realTakingAmount);
+        assertEq(inch.balanceOf(addr2), addrInchBalanceBefore + makingAmount);
+        assertEq(inch.balanceOf(addr1), addr1InchBalanceBefore - makingAmount);
+    }
+
+    function test_decimals_scale_negative() public {
+        // Advance block timestamp to ensure oracle data is considered fresh
+        vm.warp(block.timestamp + 99 seconds);
+
+        // Setup oracles with specific prices
+        daiOracle = new AggregatorMock(0.00025 ether); // 1 ETH = 4000 DAI
+        inchOracle = new AggregatorMock(1577615249227853); // 1 INCH = 0.0001577615249227853 ETH
+
+        address chainlinkCalcAddress = address(chainlinkCalculator);
+        address oracleAddress1 = address(inchOracle);
+        address oracleAddress2 = address(daiOracle);
+
+        uint256 makingAmount = 100 ether;
+        uint256 takingAmount = 632 ether;
+        int256 decimalsScale = -2; // Negative scale
+        uint256 takingSpread = 1010000000; // taker offset is 1.01
+
+        // Build order with double price data and negative decimals scale
+        OrderUtils.Order memory baseOrder = OrderUtils.Order({
+            salt: 0,
+            maker: addr1,
+            receiver: address(0),
+            makerAsset: address(inch),
+            takerAsset: address(dai),
+            makingAmount: makingAmount,
+            takingAmount: takingAmount,
+            makerTraits: OrderUtils.buildMakerTraits(address(0), false, true, true, false, false, 0, 0, 0)
+        });
+
+        bytes memory makingAmountData = buildDoublePriceCalldata(
+            chainlinkCalcAddress,
+            oracleAddress2, // DAI oracle
+            oracleAddress1, // INCH oracle
+            decimalsScale,
+            990000000 // maker offset is 0.99
+        );
+
+        bytes memory takingAmountData = buildDoublePriceCalldata(
+            chainlinkCalcAddress,
+            oracleAddress1, // INCH oracle
+            oracleAddress2, // DAI oracle
+            decimalsScale,
+            takingSpread
+        );
+
+        (OrderUtils.Order memory order, bytes memory extension) = OrderUtils.buildOrder(
+            baseOrder,
+            "", // makerAssetSuffix
+            "", // takerAssetSuffix
+            makingAmountData,
+            takingAmountData,
+            "", // predicate
+            "", // permit
+            "", // preInteraction
+            "", // postInteraction
+            "" // customData
+        );
+
+        // Sign the order
+        bytes32 orderData = swap.hashOrder(convertOrder(order));
+        (bytes32 r, bytes32 vs) = signOrder(orderData);
+
+        // Build taker traits with makingAmount flag
+        OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
+            true, // makingAmount
+            false, // unwrapWeth
+            false, // skipMakerPermit
+            false, // usePermit2
+            "", // target
+            extension, // extension
+            "", // interaction
+            takingAmount * takingSpread / 1e9 / 100 + 0.01 ether // threshold with negative scale factor
+        );
+
+        // Record initial balances
+        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
+        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
+        uint256 addrInchBalanceBefore = inch.balanceOf(addr2);
+        uint256 addr1InchBalanceBefore = inch.balanceOf(addr1);
+
+        // Fill the order
+        vm.prank(addr2);
+        swap.fillOrderArgs(
+            convertOrder(order), r, vs, makingAmount, TakerTraits.wrap(takerTraits.traits), takerTraits.args
+        );
+
+        // Calculate expected taking amount based on oracle prices with negative decimals scale
+        uint256 realTakingAmount =
+            makingAmount * takingSpread / 1e9 * (getOracleAnswer(inchOracle) / 100) / getOracleAnswer(daiOracle);
+
+        // Verify balance changes (allow for small rounding differences)
+        assertApproxEqRel(dai.balanceOf(addr2), addrDaiBalanceBefore - realTakingAmount, 0.01e18);
+        assertApproxEqRel(dai.balanceOf(addr1), addr1DaiBalanceBefore + realTakingAmount, 0.01e18);
+        assertEq(inch.balanceOf(addr2), addrInchBalanceBefore + makingAmount);
+        assertEq(inch.balanceOf(addr1), addr1InchBalanceBefore - makingAmount);
+    }
+
+    function test_zero_oracle_price_reverts() public {
+        // Advance block timestamp to ensure oracle data is considered fresh
+        vm.warp(block.timestamp + 99 seconds);
+
+        // Setup oracle with zero price
+        AggregatorMock zeroOracle = new AggregatorMock(0);
+
+        address chainlinkCalcAddress = address(chainlinkCalculator);
+        address oracleAddress = address(zeroOracle);
+
+        bytes memory makingAmountData = buildSinglePriceCalldata(
+            chainlinkCalcAddress,
+            oracleAddress,
+            990000000, // maker offset is 0.99
+            false
+        );
+
+        // Build order with zero price oracle
+        OrderUtils.Order memory baseOrder = OrderUtils.Order({
+            salt: 0,
+            maker: addr1,
+            receiver: address(0),
+            makerAsset: address(weth),
+            takerAsset: address(dai),
+            makingAmount: 1 ether,
+            takingAmount: 4000 ether,
+            makerTraits: OrderUtils.buildMakerTraits(address(0), false, true, true, false, false, 0, 0, 0)
+        });
+
+        (OrderUtils.Order memory order, bytes memory extension) = OrderUtils.buildOrder(
+            baseOrder,
+            "", // makerAssetSuffix
+            "", // takerAssetSuffix
+            makingAmountData,
+            "", // takingAmountData
+            "", // predicate
+            "", // permit
+            "", // preInteraction
+            "", // postInteraction
+            "" // customData
+        );
+
+        // Sign the order
+        bytes32 orderData = swap.hashOrder(convertOrder(order));
+        (bytes32 r, bytes32 vs) = signOrder(orderData);
+
+        // Build taker traits
+        OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
+            false, // makingAmount
+            false, // unwrapWeth
+            false, // skipMakerPermit
+            false, // usePermit2
+            "", // target
+            extension, // extension
+            "", // interaction
+            0.99 ether // threshold
+        );
+
+        // Expect the transaction to revert due to division by zero
+        vm.prank(addr2);
+        vm.expectRevert();
+        swap.fillOrderArgs(
+            convertOrder(order), r, vs, 4000 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args
+        );
     }
 }
