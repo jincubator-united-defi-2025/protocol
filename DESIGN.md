@@ -6,6 +6,8 @@ The protocol implements extensions to the 1inch limit-order-protocol. To enable 
 
 Stretch Goals include enhance price discovery and NEAR Fusion+ integration.
 
+Technical documentation can be found on [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/jincubator-united-defi-2025/protocol)
+
 ## Design
 
 For Unite Defi we are working on 3 separate but compatible streams.
