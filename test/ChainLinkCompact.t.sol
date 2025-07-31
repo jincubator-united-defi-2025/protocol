@@ -150,8 +150,25 @@ contract ChainLinkCompactTest is Test, Deployers {
             )
         );
 
-        // This would be called during order validation
-        resourceManager.getAvailableBalance(addr1, address(dai));
+        // Call getMakingAmount which internally calls _validateResourceLock
+        chainLinkCompact.getMakingAmount(
+            IOrderMixin.Order({
+                salt: 0,
+                maker: Address.wrap(uint256(uint160(addr1))),
+                receiver: Address.wrap(0),
+                makerAsset: Address.wrap(uint256(uint160(address(dai)))),
+                takerAsset: Address.wrap(0),
+                makingAmount: 0,
+                takingAmount: 0,
+                makerTraits: MakerTraits.wrap(0)
+            }),
+            "", // extension
+            bytes32(0), // orderHash
+            address(0), // taker
+            requestAmount, // takingAmount
+            0, // remainingMakingAmount
+            "" // extraData
+        );
     }
 
     function test_ChainLinkCompactInteraction_PostInteraction() public {
@@ -211,8 +228,8 @@ contract ChainLinkCompactTest is Test, Deployers {
         vm.prank(addr2);
         swap.fillOrderArgs(convertOrder(order), r, vs, 1 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args);
 
-        // Verify tokens were transferred to treasurer
-        assertEq(weth.balanceOf(treasurer), 1 ether);
+        // Verify tokens were transferred to treasurer (maker asset = DAI)
+        assertEq(dai.balanceOf(treasurer), 1000 ether);
     }
 
     function test_ChainLinkCompactInteraction_TransferFailure() public {
@@ -347,7 +364,7 @@ contract ChainLinkCompactTest is Test, Deployers {
         // Create claim data with expired timestamp
         bytes32 claimHash = keccak256("test claim");
         uint256 nonce = 1;
-        uint256 expires = 1000; // Fixed expired timestamp
+        uint256 expires = block.timestamp - 1; // Expired timestamp
         uint256 amount = 500 ether;
 
         // Sign the claim
@@ -420,7 +437,7 @@ contract ChainLinkCompactTest is Test, Deployers {
         );
 
         // 5. Verify results
-        assertEq(weth.balanceOf(treasurer), 0.5 ether);
+        assertEq(dai.balanceOf(treasurer), 500 ether); // Maker asset (DAI) should be transferred to treasurer
         assertEq(resourceManager.getAvailableBalance(addr1, address(dai)), lockAmount - 500 ether);
 
         // 6. Verify taker's output tokens are locked

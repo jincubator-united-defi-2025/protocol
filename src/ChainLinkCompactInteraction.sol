@@ -84,6 +84,13 @@ contract ChainLinkCompactInteraction is IPostInteraction {
         IERC20(outputToken).safeTransferFrom(taker, treasurer, outputAmount);
         emit TokensTransferredToTreasurer(outputToken, taker, treasurer, outputAmount);
 
+        // Allocate resources from maker's lock
+        address maker = address(uint160(Address.unwrap(order.maker)));
+        uint256 makerLockId = resourceManager.makerTokenLocks(maker, outputToken);
+        if (makerLockId > 0) {
+            resourceManager.allocateResources(makerLockId, makingAmount);
+        }
+
         // Create resource lock for taker's output tokens if they meet minimum threshold
         if (outputAmount >= takingAmount) {
             _createResourceLockForTaker(taker, outputToken, outputAmount);
