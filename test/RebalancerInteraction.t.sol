@@ -64,7 +64,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
     function test_eth_to_dai_chainlink_order_with_rebalancer() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         // DAI oracle: 1 ETH = 4000 DAI (0.00025 ETH per DAI)
@@ -160,7 +160,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
     function test_dai_to_eth_chainlink_order_with_rebalancer() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
@@ -254,7 +254,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
     function test_dai_to_1inch_chainlink_order_takingAmountData_with_rebalancer() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether); // 1 ETH = 4000 DAI
@@ -361,7 +361,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
     function test_dai_to_1inch_chainlink_order_makingAmountData_with_rebalancer() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether); // 1 ETH = 4000 DAI
@@ -468,7 +468,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
     function test_dai_to_1inch_stop_loss_order_with_rebalancer() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
@@ -560,7 +560,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
     function test_dai_to_1inch_stop_loss_order_predicate_invalid_with_rebalancer() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
@@ -633,7 +633,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
     function test_eth_to_dai_stop_loss_order_with_rebalancer() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
@@ -651,7 +651,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         // Build predicate call
         bytes memory predicate = abi.encodeWithSelector(
             swap.lt.selector,
-            0.0002501 ether, // Threshold
+            0.0002501 ether, // Threshold - higher than oracle value to make predicate true
             latestAnswerCall
         );
 

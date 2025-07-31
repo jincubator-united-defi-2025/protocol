@@ -44,7 +44,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
     function test_eth_to_dai_chainlink_order() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         // DAI oracle: 1 ETH = 4000 DAI (0.00025 ETH per DAI)
@@ -132,7 +132,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
     function test_dai_to_eth_chainlink_order() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
@@ -216,7 +216,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
     function test_dai_to_1inch_chainlink_order_takingAmountData() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether); // 1 ETH = 4000 DAI
@@ -315,7 +315,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
         // Advance block timestamp to ensure oracle data is considered fresh
         // The ChainlinkCalculator checks if updatedAt + 4 hours < block.timestamp
         // Minimum advancement needed: 99 seconds
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether); // 1 ETH = 4000 DAI
@@ -412,7 +412,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
     function test_dai_to_1inch_stop_loss_order() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
@@ -494,7 +494,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
     function test_dai_to_1inch_stop_loss_order_predicate_invalid() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
@@ -565,7 +565,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
     function test_eth_to_dai_stop_loss_order() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
@@ -583,7 +583,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
         // Build predicate call
         bytes memory predicate = abi.encodeWithSelector(
             swap.lt.selector,
-            0.0002501 ether, // Threshold
+            0.0002501 ether, // Threshold - higher than oracle value to make predicate true
             latestAnswerCall
         );
 

@@ -110,8 +110,8 @@ contract Deployers is Test {
         chainlinkCalculator = new ChainlinkCalculator();
         daiOracle = new AggregatorMock(1000000000000000000);
         inchOracle = new AggregatorMock(1000000000000000000);
-        setupUsers();
 
         deployLimitOrderProtocol(address(weth));
+        setupUsers();
     }
 }

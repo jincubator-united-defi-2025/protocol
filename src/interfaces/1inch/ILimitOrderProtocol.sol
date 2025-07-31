@@ -46,12 +46,11 @@ interface ILimitOrderProtocol is IOrderMixin {
 
     /**
      * @notice Low-level call function
-     * @param value Value to send with the call
-     * @param target Target address to call
+     * @param value Value to test
      * @param data Data to send with the call
      * @return success Whether the call was successful
      */
-    function lt(uint256 value, address target, bytes calldata data) external view returns (bool success);
+    function lt(uint256 value, bytes calldata data) external view returns (bool success);
 
     /**
      * @notice Performs an arbitrary static call to target with data
