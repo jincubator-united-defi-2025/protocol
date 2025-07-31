@@ -97,7 +97,7 @@ contract Deployers is Test {
     }
 
     function deployLimitOrderProtocol(address weth) internal {
-        swap = ILimitOrderProtocol(address(LimitOrderProtocolDeployer.deploy(address(weth), address(permit2))));
+        swap = ILimitOrderProtocol(address(LimitOrderProtocolDeployer.deploy(weth, address(permit2))));
 
         vm.label(address(swap), "LimitOrderProtocol");
     }

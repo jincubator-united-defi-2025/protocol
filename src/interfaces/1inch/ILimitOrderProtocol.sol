@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import "./IOrderMixin.sol";
+import "@jincubator/limit-order-protocol/contracts/interfaces/IOrderMixin.sol";
 
 /**
  * @title ##1inch Limit Order Protocol v4
@@ -52,4 +52,12 @@ interface ILimitOrderProtocol is IOrderMixin {
      * @return success Whether the call was successful
      */
     function lt(uint256 value, address target, bytes calldata data) external view returns (bool success);
+
+    /**
+     * @notice Performs an arbitrary static call to target with data
+     * @param target Target address to call
+     * @param data Data to send with the call
+     * @return result Bytes transmuted to uint256
+     */
+    function arbitraryStaticCall(address target, bytes calldata data) external view returns (uint256 result);
 }
