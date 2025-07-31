@@ -77,7 +77,8 @@ Note: For demonstration purposes we can use order and fulfillment via local scri
 ### Fusion+ to Near Implementations (Stretch Goal)
 
 - Relayer
-- Resolver
+- [Resolver](https://github.com/1inch/cross-chain-resolver-example/blob/master/contracts/src/Resolver.sol)
+  - [Fusion Resolver Example](https://github.com/1inch/fusion-resolver-example/blob/main/contracts/ResolverExample.sol) - don't need this one
 
 ### Near Solver Built with NEAR's Shade Agent Framework
 
@@ -148,6 +149,7 @@ NEAR Integration
 
 - [Near Smart Contracts](https://dev.near.org/documentation/smart-contracts/what-is)
 - [NEAR Rust SDK Documentation](https://docs.near.org/sdk/rust/introduction)
+- [NEAR Market Maker](https://docs.near-intents.org/near-intents/market-makers): We are adding Fusion as a Market Maker on NEAR
 
 ### Prize Streams
 
