@@ -33,7 +33,7 @@
 
 ## Flow
 
-- Resolver Contract executes calls to Tycho Dispatcher
+- Resolver Contract executes calls to Tycho Dispatchr or Router
 - Need to pass SolverPayload and Resolver Address when calling fill
   - uses `buildTakerTraits`
     ```solidity

@@ -76,7 +76,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         // Build order with chainlink price data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(weth),
             takerAsset: address(dai),
@@ -131,28 +131,28 @@ contract RebalancerInteractionTest is Test, Deployers {
         );
 
         // Approve rebalancer contract to transfer tokens on behalf of taker
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         weth.approve(address(rebalancerInteraction), 1 ether);
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrWethBalanceBefore = weth.balanceOf(addr2);
-        uint256 addr1WethBalanceBefore = weth.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrWethBalanceBefore = weth.balanceOf(takerAddr);
+        uint256 makerAddrWethBalanceBefore = weth.balanceOf(makerAddr);
         uint256 addr3WethBalanceBefore = weth.balanceOf(addr3);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, 4000 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Verify balance changes
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore - 4000 ether);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore + 4000 ether);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - 4000 ether);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + 4000 ether);
         // Taker doesn't receive WETH because it's transferred to treasurer
-        assertEq(weth.balanceOf(addr2), addrWethBalanceBefore);
-        assertEq(weth.balanceOf(addr1), addr1WethBalanceBefore - 0.99 ether);
+        assertEq(weth.balanceOf(takerAddr), addrWethBalanceBefore);
+        assertEq(weth.balanceOf(makerAddr), makerAddrWethBalanceBefore - 0.99 ether);
 
         // Verify treasurer received the output tokens
         assertEq(weth.balanceOf(addr3), addr3WethBalanceBefore + 0.99 ether);
@@ -171,7 +171,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         // Build order with chainlink price data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(dai),
             takerAsset: address(weth),
@@ -226,27 +226,27 @@ contract RebalancerInteractionTest is Test, Deployers {
         );
 
         // Add approvals for rebalancer
-        addApprovalsForTaker(addr2, address(dai), 4000 ether);
+        addApprovalsForTaker(takerAddr, address(dai), 4000 ether);
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrWethBalanceBefore = weth.balanceOf(addr2);
-        uint256 addr1WethBalanceBefore = weth.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrWethBalanceBefore = weth.balanceOf(takerAddr);
+        uint256 makerAddrWethBalanceBefore = weth.balanceOf(makerAddr);
         uint256 addr3DaiBalanceBefore = dai.balanceOf(addr3);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, 4000 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Verify balance changes
         // Taker doesn't receive DAI because it's transferred to treasurer
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore - 4000 ether);
-        assertEq(weth.balanceOf(addr2), addrWethBalanceBefore - 1.01 ether);
-        assertEq(weth.balanceOf(addr1), addr1WethBalanceBefore + 1.01 ether);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore - 4000 ether);
+        assertEq(weth.balanceOf(takerAddr), addrWethBalanceBefore - 1.01 ether);
+        assertEq(weth.balanceOf(makerAddr), makerAddrWethBalanceBefore + 1.01 ether);
 
         // Verify treasurer received the output tokens (DAI)
         assertEq(dai.balanceOf(addr3), addr3DaiBalanceBefore + 4000 ether);
@@ -272,7 +272,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         // Build order with double price data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(inch),
             takerAsset: address(dai),
@@ -329,17 +329,17 @@ contract RebalancerInteractionTest is Test, Deployers {
         );
 
         // Add approvals for rebalancer
-        addApprovalsForTaker(addr2, address(inch), 1000 ether);
+        addApprovalsForTaker(takerAddr, address(inch), 1000 ether);
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrInchBalanceBefore = inch.balanceOf(addr2);
-        uint256 addr1InchBalanceBefore = inch.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrInchBalanceBefore = inch.balanceOf(takerAddr);
+        uint256 makerAddrInchBalanceBefore = inch.balanceOf(makerAddr);
         uint256 addr3InchBalanceBefore = inch.balanceOf(addr3);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, makingAmount, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
@@ -349,11 +349,11 @@ contract RebalancerInteractionTest is Test, Deployers {
             makingAmount * takingSpread / 1e9 * getOracleAnswer(inchOracle) / getOracleAnswer(daiOracle);
 
         // Verify balance changes
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore - realTakingAmount);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore + realTakingAmount);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - realTakingAmount);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + realTakingAmount);
         // Taker doesn't receive INCH because it's transferred to treasurer
-        assertEq(inch.balanceOf(addr2), addrInchBalanceBefore);
-        assertEq(inch.balanceOf(addr1), addr1InchBalanceBefore - makingAmount);
+        assertEq(inch.balanceOf(takerAddr), addrInchBalanceBefore);
+        assertEq(inch.balanceOf(makerAddr), makerAddrInchBalanceBefore - makingAmount);
 
         // Verify treasurer received the output tokens (INCH)
         assertEq(inch.balanceOf(addr3), addr3InchBalanceBefore + makingAmount);
@@ -379,7 +379,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         // Build order with double price data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(inch),
             takerAsset: address(dai),
@@ -436,17 +436,17 @@ contract RebalancerInteractionTest is Test, Deployers {
         );
 
         // Add approvals for rebalancer
-        addApprovalsForTaker(addr2, address(inch), 1000 ether);
+        addApprovalsForTaker(takerAddr, address(inch), 1000 ether);
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrInchBalanceBefore = inch.balanceOf(addr2);
-        uint256 addr1InchBalanceBefore = inch.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrInchBalanceBefore = inch.balanceOf(takerAddr);
+        uint256 makerAddrInchBalanceBefore = inch.balanceOf(makerAddr);
         uint256 addr3InchBalanceBefore = inch.balanceOf(addr3);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, takingAmount, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
@@ -456,11 +456,11 @@ contract RebalancerInteractionTest is Test, Deployers {
             takingAmount * makingSpread / 1e9 * getOracleAnswer(daiOracle) / getOracleAnswer(inchOracle);
 
         // Verify balance changes
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore - takingAmount);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore + takingAmount);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - takingAmount);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + takingAmount);
         // Taker doesn't receive INCH because it's transferred to treasurer
-        assertEq(inch.balanceOf(addr2), addrInchBalanceBefore);
-        assertEq(inch.balanceOf(addr1), addr1InchBalanceBefore - realMakingAmount);
+        assertEq(inch.balanceOf(takerAddr), addrInchBalanceBefore);
+        assertEq(inch.balanceOf(makerAddr), makerAddrInchBalanceBefore - realMakingAmount);
 
         // Verify treasurer received the output tokens (INCH)
         assertEq(inch.balanceOf(addr3), addr3InchBalanceBefore + realMakingAmount);
@@ -491,7 +491,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         // Build order with predicate
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(inch),
             takerAsset: address(dai),
@@ -532,27 +532,27 @@ contract RebalancerInteractionTest is Test, Deployers {
         );
 
         // Add approvals for rebalancer
-        addApprovalsForTaker(addr2, address(inch), 1000 ether);
+        addApprovalsForTaker(takerAddr, address(inch), 1000 ether);
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrInchBalanceBefore = inch.balanceOf(addr2);
-        uint256 addr1InchBalanceBefore = inch.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrInchBalanceBefore = inch.balanceOf(takerAddr);
+        uint256 makerAddrInchBalanceBefore = inch.balanceOf(makerAddr);
         uint256 addr3InchBalanceBefore = inch.balanceOf(addr3);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, makingAmount, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Verify balance changes
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore - takingAmount);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore + takingAmount);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - takingAmount);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + takingAmount);
         // Taker doesn't receive INCH because it's transferred to treasurer
-        assertEq(inch.balanceOf(addr2), addrInchBalanceBefore);
-        assertEq(inch.balanceOf(addr1), addr1InchBalanceBefore - makingAmount);
+        assertEq(inch.balanceOf(takerAddr), addrInchBalanceBefore);
+        assertEq(inch.balanceOf(makerAddr), makerAddrInchBalanceBefore - makingAmount);
 
         // Verify treasurer received the output tokens (INCH)
         assertEq(inch.balanceOf(addr3), addr3InchBalanceBefore + makingAmount);
@@ -583,7 +583,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         // Build order with predicate
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(inch),
             takerAsset: address(dai),
@@ -624,7 +624,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         );
 
         // Expect the transaction to revert due to invalid predicate
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         vm.expectRevert();
         swap.fillOrderArgs(
             convertOrder(order), r, vs, makingAmount, TakerTraits.wrap(takerTraits.traits), takerTraits.args
@@ -658,7 +658,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         // Build order with predicate
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(weth),
             takerAsset: address(dai),
@@ -699,28 +699,28 @@ contract RebalancerInteractionTest is Test, Deployers {
         );
 
         // Add approvals for rebalancer
-        addApprovalsForTaker(addr2, address(weth), 1 ether);
-        addApprovalsForTaker(addr2, address(inch), 1000 ether); // Approve INCH tokens for rebalancer
+        addApprovalsForTaker(takerAddr, address(weth), 1 ether);
+        addApprovalsForTaker(takerAddr, address(inch), 1000 ether); // Approve INCH tokens for rebalancer
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrWethBalanceBefore = weth.balanceOf(addr2);
-        uint256 addr1WethBalanceBefore = weth.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrWethBalanceBefore = weth.balanceOf(takerAddr);
+        uint256 makerAddrWethBalanceBefore = weth.balanceOf(makerAddr);
         uint256 addr3WethBalanceBefore = weth.balanceOf(addr3);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, makingAmount, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Verify balance changes
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore - takingAmount);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore + takingAmount);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - takingAmount);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + takingAmount);
         // Taker doesn't receive WETH because it's transferred to treasurer
-        assertEq(weth.balanceOf(addr2), addrWethBalanceBefore);
-        assertEq(weth.balanceOf(addr1), addr1WethBalanceBefore - makingAmount);
+        assertEq(weth.balanceOf(takerAddr), addrWethBalanceBefore);
+        assertEq(weth.balanceOf(makerAddr), makerAddrWethBalanceBefore - makingAmount);
 
         // Verify treasurer received the output tokens (WETH)
         assertEq(weth.balanceOf(addr3), addr3WethBalanceBefore + makingAmount);
@@ -730,7 +730,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         // Build a simple order without any extension data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 1,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(weth),
             takerAsset: address(dai),
@@ -772,23 +772,23 @@ contract RebalancerInteractionTest is Test, Deployers {
         );
 
         // Add approvals for rebalancer
-        addApprovalsForTaker(addr2, address(weth), 1 ether);
+        addApprovalsForTaker(takerAddr, address(weth), 1 ether);
 
         // Record initial balances
         uint256 addr3WethBalanceBefore = weth.balanceOf(addr3);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, 4000 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Check balances
-        assertEq(dai.balanceOf(addr2), 996000000000000000000000, "addr2 DAI balance");
-        assertEq(dai.balanceOf(addr1), 1004000000000000000000000, "addr1 DAI balance");
+        assertEq(dai.balanceOf(takerAddr), 996000000000000000000000, "takerAddr DAI balance");
+        assertEq(dai.balanceOf(makerAddr), 1004000000000000000000000, "makerAddr DAI balance");
         // Taker doesn't receive WETH because it's transferred to treasurer
-        assertEq(weth.balanceOf(addr2), 100000000000000000000, "addr2 WETH balance");
-        assertEq(weth.balanceOf(addr1), 99000000000000000000, "addr1 WETH balance");
+        assertEq(weth.balanceOf(takerAddr), 100000000000000000000, "takerAddr WETH balance");
+        assertEq(weth.balanceOf(makerAddr), 99000000000000000000, "makerAddr WETH balance");
 
         // Verify treasurer received the output tokens (WETH)
         assertEq(weth.balanceOf(addr3), addr3WethBalanceBefore + 1 ether);
@@ -798,7 +798,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         // Build a simple order without any extension data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 2,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(weth),
             takerAsset: address(dai),
@@ -840,23 +840,23 @@ contract RebalancerInteractionTest is Test, Deployers {
         );
 
         // Add approvals for rebalancer
-        addApprovalsForTaker(addr2, address(weth), 0.5 ether);
+        addApprovalsForTaker(takerAddr, address(weth), 0.5 ether);
 
         // Record initial balances
         uint256 addr3WethBalanceBefore = weth.balanceOf(addr3);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, 2000 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Check balances
-        assertEq(dai.balanceOf(addr2), 998000000000000000000000, "addr2 DAI balance");
-        assertEq(dai.balanceOf(addr1), 1002000000000000000000000, "addr1 DAI balance");
+        assertEq(dai.balanceOf(takerAddr), 998000000000000000000000, "takerAddr DAI balance");
+        assertEq(dai.balanceOf(makerAddr), 1002000000000000000000000, "makerAddr DAI balance");
         // Taker doesn't receive WETH because it's transferred to treasurer
-        assertEq(weth.balanceOf(addr2), 100000000000000000000, "addr2 WETH balance");
-        assertEq(weth.balanceOf(addr1), 99500000000000000000, "addr1 WETH balance");
+        assertEq(weth.balanceOf(takerAddr), 100000000000000000000, "takerAddr WETH balance");
+        assertEq(weth.balanceOf(makerAddr), 99500000000000000000, "makerAddr WETH balance");
 
         // Verify treasurer received the output tokens (WETH)
         assertEq(weth.balanceOf(addr3), addr3WethBalanceBefore + 0.5 ether);
@@ -880,7 +880,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         // Build a simple order
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 3,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(weth),
             takerAsset: address(dai),
@@ -944,7 +944,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
     // Helper function to sign order and create vs
     function signOrder(bytes32 orderData) internal view returns (bytes32 r, bytes32 vs) {
-        (uint8 v, bytes32 r_, bytes32 s) = vm.sign(pkAddr1, orderData);
+        (uint8 v, bytes32 r_, bytes32 s) = vm.sign(makerPK, orderData);
         r = r_;
         // yParityAndS format: s | (v << 255)
         // v should be 27 or 28, we need to convert to 0 or 1 for yParity

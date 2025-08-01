@@ -33,41 +33,41 @@ contract Deployers is Test {
     uint256 public chainId = 1;
 
     // Test users - global variables
-    address public addr1;
-    uint256 public pkAddr1;
-    address public addr2;
-    uint256 public pkAddr2;
+    address public makerAddr;
+    uint256 public makerPK;
+    address public takerAddr;
+    uint256 public takerPK;
 
     function setupUsers() internal {
-        (addr1, pkAddr1) = makeAddrAndKey("addr1");
-        (addr2, pkAddr2) = makeAddrAndKey("addr2");
+        (makerAddr, makerPK) = makeAddrAndKey("makerAddr");
+        (takerAddr, takerPK) = makeAddrAndKey("takerAddr");
         // Mint tokens to test addresses
-        dai.mint(addr2, 1_000_000 ether);
-        dai.mint(addr1, 1_000_000 ether);
-        inch.mint(addr2, 1_000_000 ether);
-        inch.mint(addr1, 1_000_000 ether);
+        dai.mint(takerAddr, 1_000_000 ether);
+        dai.mint(makerAddr, 1_000_000 ether);
+        inch.mint(takerAddr, 1_000_000 ether);
+        inch.mint(makerAddr, 1_000_000 ether);
 
         // Setup WETH deposits
-        vm.deal(addr2, 100 ether);
-        vm.deal(addr1, 100 ether);
-        vm.prank(addr2);
+        vm.deal(makerAddr, 100 ether);
+        vm.deal(takerAddr, 100 ether);
+        vm.prank(makerAddr);
         weth.deposit{value: 100 ether}();
-        vm.prank(addr1);
+        vm.prank(takerAddr);
         weth.deposit{value: 100 ether}();
 
         // Approve tokens for swap contract
-        vm.prank(addr2);
+        vm.prank(makerAddr);
         dai.approve(address(swap), 1_000_000 ether);
-        vm.prank(addr2);
+        vm.prank(makerAddr);
         weth.approve(address(swap), 1_000_000 ether);
-        vm.prank(addr2);
+        vm.prank(makerAddr);
         inch.approve(address(swap), 1_000_000 ether);
 
-        vm.prank(addr1);
+        vm.prank(takerAddr);
         dai.approve(address(swap), 1_000_000 ether);
-        vm.prank(addr1);
+        vm.prank(takerAddr);
         weth.approve(address(swap), 1_000_000 ether);
-        vm.prank(addr1);
+        vm.prank(takerAddr);
         inch.approve(address(swap), 1_000_000 ether);
     }
 

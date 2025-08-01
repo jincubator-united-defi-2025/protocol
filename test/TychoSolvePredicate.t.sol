@@ -56,7 +56,7 @@ contract TychoSolvePredicateTest is Test, Deployers {
         // Build order with chainlink price data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(weth),
             takerAsset: address(dai),
@@ -96,7 +96,7 @@ contract TychoSolvePredicateTest is Test, Deployers {
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
         console2.log("Order hash:", uint256(orderData));
-        console2.log("Expected maker:", addr1);
+        console2.log("Expected maker:", makerAddr);
         (bytes32 r, bytes32 vs) = signOrder(orderData);
 
         // Build taker traits
@@ -112,22 +112,22 @@ contract TychoSolvePredicateTest is Test, Deployers {
         );
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrWethBalanceBefore = weth.balanceOf(addr2);
-        uint256 addr1WethBalanceBefore = weth.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrWethBalanceBefore = weth.balanceOf(takerAddr);
+        uint256 makerAddrWethBalanceBefore = weth.balanceOf(makerAddr);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, 4000 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Verify balance changes
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore - 4000 ether);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore + 4000 ether);
-        assertEq(weth.balanceOf(addr2), addrWethBalanceBefore + 0.99 ether);
-        assertEq(weth.balanceOf(addr1), addr1WethBalanceBefore - 0.99 ether);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - 4000 ether);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + 4000 ether);
+        assertEq(weth.balanceOf(takerAddr), addrWethBalanceBefore + 0.99 ether);
+        assertEq(weth.balanceOf(makerAddr), makerAddrWethBalanceBefore - 0.99 ether);
     }
 
     function test_dai_to_eth_chainlink_order() public {
@@ -143,7 +143,7 @@ contract TychoSolvePredicateTest is Test, Deployers {
         // Build order with chainlink price data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(dai),
             takerAsset: address(weth),
@@ -196,22 +196,22 @@ contract TychoSolvePredicateTest is Test, Deployers {
         );
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrWethBalanceBefore = weth.balanceOf(addr2);
-        uint256 addr1WethBalanceBefore = weth.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrWethBalanceBefore = weth.balanceOf(takerAddr);
+        uint256 makerAddrWethBalanceBefore = weth.balanceOf(makerAddr);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, 4000 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Verify balance changes
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore + 4000 ether);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore - 4000 ether);
-        assertEq(weth.balanceOf(addr2), addrWethBalanceBefore - 1.01 ether);
-        assertEq(weth.balanceOf(addr1), addr1WethBalanceBefore + 1.01 ether);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore + 4000 ether);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore - 4000 ether);
+        assertEq(weth.balanceOf(takerAddr), addrWethBalanceBefore - 1.01 ether);
+        assertEq(weth.balanceOf(makerAddr), makerAddrWethBalanceBefore + 1.01 ether);
     }
 
     function test_dai_to_1inch_chainlink_order_takingAmountData() public {
@@ -234,7 +234,7 @@ contract TychoSolvePredicateTest is Test, Deployers {
         // Build order with double price data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(inch),
             takerAsset: address(dai),
@@ -289,13 +289,13 @@ contract TychoSolvePredicateTest is Test, Deployers {
         );
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrInchBalanceBefore = inch.balanceOf(addr2);
-        uint256 addr1InchBalanceBefore = inch.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrInchBalanceBefore = inch.balanceOf(takerAddr);
+        uint256 makerAddrInchBalanceBefore = inch.balanceOf(makerAddr);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, makingAmount, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
@@ -305,10 +305,10 @@ contract TychoSolvePredicateTest is Test, Deployers {
             makingAmount * takingSpread / 1e9 * getOracleAnswer(inchOracle) / getOracleAnswer(daiOracle);
 
         // Verify balance changes
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore - realTakingAmount);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore + realTakingAmount);
-        assertEq(inch.balanceOf(addr2), addrInchBalanceBefore + makingAmount);
-        assertEq(inch.balanceOf(addr1), addr1InchBalanceBefore - makingAmount);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - realTakingAmount);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + realTakingAmount);
+        assertEq(inch.balanceOf(takerAddr), addrInchBalanceBefore + makingAmount);
+        assertEq(inch.balanceOf(makerAddr), makerAddrInchBalanceBefore - makingAmount);
     }
 
     function test_dai_to_1inch_chainlink_order_makingAmountData() public {
@@ -333,7 +333,7 @@ contract TychoSolvePredicateTest is Test, Deployers {
         // Build order with double price data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(inch),
             takerAsset: address(dai),
@@ -388,13 +388,13 @@ contract TychoSolvePredicateTest is Test, Deployers {
         );
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrInchBalanceBefore = inch.balanceOf(addr2);
-        uint256 addr1InchBalanceBefore = inch.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrInchBalanceBefore = inch.balanceOf(takerAddr);
+        uint256 makerAddrInchBalanceBefore = inch.balanceOf(makerAddr);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, takingAmount, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
@@ -404,10 +404,10 @@ contract TychoSolvePredicateTest is Test, Deployers {
             takingAmount * makingSpread / 1e9 * getOracleAnswer(daiOracle) / getOracleAnswer(inchOracle);
 
         // Verify balance changes
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore - takingAmount);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore + takingAmount);
-        assertEq(inch.balanceOf(addr2), addrInchBalanceBefore + realMakingAmount);
-        assertEq(inch.balanceOf(addr1), addr1InchBalanceBefore - realMakingAmount);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - takingAmount);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + takingAmount);
+        assertEq(inch.balanceOf(takerAddr), addrInchBalanceBefore + realMakingAmount);
+        assertEq(inch.balanceOf(makerAddr), makerAddrInchBalanceBefore - realMakingAmount);
     }
 
     function test_dai_to_1inch_stop_loss_order() public {
@@ -435,7 +435,7 @@ contract TychoSolvePredicateTest is Test, Deployers {
         // Build order with predicate
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(inch),
             takerAsset: address(dai),
@@ -474,22 +474,22 @@ contract TychoSolvePredicateTest is Test, Deployers {
         );
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrInchBalanceBefore = inch.balanceOf(addr2);
-        uint256 addr1InchBalanceBefore = inch.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrInchBalanceBefore = inch.balanceOf(takerAddr);
+        uint256 makerAddrInchBalanceBefore = inch.balanceOf(makerAddr);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, makingAmount, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Verify balance changes
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore - takingAmount);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore + takingAmount);
-        assertEq(inch.balanceOf(addr2), addrInchBalanceBefore + makingAmount);
-        assertEq(inch.balanceOf(addr1), addr1InchBalanceBefore - makingAmount);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - takingAmount);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + takingAmount);
+        assertEq(inch.balanceOf(takerAddr), addrInchBalanceBefore + makingAmount);
+        assertEq(inch.balanceOf(makerAddr), makerAddrInchBalanceBefore - makingAmount);
     }
 
     function test_dai_to_1inch_stop_loss_order_predicate_invalid() public {
@@ -517,7 +517,7 @@ contract TychoSolvePredicateTest is Test, Deployers {
         // Build order with predicate
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(inch),
             takerAsset: address(dai),
@@ -556,7 +556,7 @@ contract TychoSolvePredicateTest is Test, Deployers {
         );
 
         // Expect the transaction to revert due to invalid predicate
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         vm.expectRevert();
         swap.fillOrderArgs(
             convertOrder(order), r, vs, makingAmount, TakerTraits.wrap(takerTraits.traits), takerTraits.args
@@ -590,7 +590,7 @@ contract TychoSolvePredicateTest is Test, Deployers {
         // Build order with predicate
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(weth),
             takerAsset: address(dai),
@@ -629,29 +629,29 @@ contract TychoSolvePredicateTest is Test, Deployers {
         );
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrWethBalanceBefore = weth.balanceOf(addr2);
-        uint256 addr1WethBalanceBefore = weth.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrWethBalanceBefore = weth.balanceOf(takerAddr);
+        uint256 makerAddrWethBalanceBefore = weth.balanceOf(makerAddr);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, makingAmount, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Verify balance changes
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore - takingAmount);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore + takingAmount);
-        assertEq(weth.balanceOf(addr2), addrWethBalanceBefore + makingAmount);
-        assertEq(weth.balanceOf(addr1), addr1WethBalanceBefore - makingAmount);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - takingAmount);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + takingAmount);
+        assertEq(weth.balanceOf(takerAddr), addrWethBalanceBefore + makingAmount);
+        assertEq(weth.balanceOf(makerAddr), makerAddrWethBalanceBefore - makingAmount);
     }
 
     function test_simple_order_without_extension() public {
         // Build a simple order without any extension data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 1,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(weth),
             takerAsset: address(dai),
@@ -691,23 +691,23 @@ contract TychoSolvePredicateTest is Test, Deployers {
         );
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, 4000 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Check balances
-        assertEq(dai.balanceOf(addr2), 996000000000000000000000, "addr2 DAI balance");
-        assertEq(dai.balanceOf(addr1), 1004000000000000000000000, "addr1 DAI balance");
-        assertEq(weth.balanceOf(addr2), 101000000000000000000, "addr2 WETH balance");
-        assertEq(weth.balanceOf(addr1), 99000000000000000000, "addr1 WETH balance");
+        assertEq(dai.balanceOf(takerAddr), 996000000000000000000000, "takerAddr DAI balance");
+        assertEq(dai.balanceOf(makerAddr), 1004000000000000000000000, "makerAddr DAI balance");
+        assertEq(weth.balanceOf(takerAddr), 101000000000000000000, "takerAddr WETH balance");
+        assertEq(weth.balanceOf(makerAddr), 99000000000000000000, "makerAddr WETH balance");
     }
 
     function test_simple_order_with_different_amounts() public {
         // Build a simple order without any extension data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 2,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(weth),
             takerAsset: address(dai),
@@ -747,16 +747,16 @@ contract TychoSolvePredicateTest is Test, Deployers {
         );
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, 2000 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Check balances
-        assertEq(dai.balanceOf(addr2), 998000000000000000000000, "addr2 DAI balance");
-        assertEq(dai.balanceOf(addr1), 1002000000000000000000000, "addr1 DAI balance");
-        assertEq(weth.balanceOf(addr2), 100500000000000000000, "addr2 WETH balance");
-        assertEq(weth.balanceOf(addr1), 99500000000000000000, "addr1 WETH balance");
+        assertEq(dai.balanceOf(takerAddr), 998000000000000000000000, "takerAddr DAI balance");
+        assertEq(dai.balanceOf(makerAddr), 1002000000000000000000000, "makerAddr DAI balance");
+        assertEq(weth.balanceOf(takerAddr), 100500000000000000000, "takerAddr WETH balance");
+        assertEq(weth.balanceOf(makerAddr), 99500000000000000000, "makerAddr WETH balance");
     }
 
     // Helper function to convert OrderUtils.Order to IOrderMixin.Order
@@ -775,7 +775,7 @@ contract TychoSolvePredicateTest is Test, Deployers {
 
     // Helper function to sign order and create vs
     function signOrder(bytes32 orderData) internal view returns (bytes32 r, bytes32 vs) {
-        (uint8 v, bytes32 r_, bytes32 s) = vm.sign(pkAddr1, orderData);
+        (uint8 v, bytes32 r_, bytes32 s) = vm.sign(makerPK, orderData);
         r = r_;
         // yParityAndS format: s | (v << 255)
         // v should be 27 or 28, we need to convert to 0 or 1 for yParity
