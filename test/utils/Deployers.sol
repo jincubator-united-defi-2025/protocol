@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import {Test, console2} from "forge-std/Test.sol";
 import {MockERC20} from "solmate/src/test/utils/mocks/MockERC20.sol";
 import {ERC20} from "the-compact/lib/solady/src/tokens/ERC20.sol";
+import {IERC20} from "@forge-std/interfaces/IERC20.sol";
 import {WETH} from "the-compact/lib/solady/src/tokens/WETH.sol";
 import {IWETH} from "@1inch/solidity-utils/contracts/interfaces/IWETH.sol";
 import {IPermit2} from "permit2/src/interfaces/IPermit2.sol";
@@ -26,10 +27,10 @@ contract Deployers is Test, TychoRouterTestSetup {
     // Global Variables
     uint256 public chainId = 1;
     IPermit2 permit2;
-    MockERC20 public dai;
-    MockERC20 public inch;
-    MockERC20 public usdc;
-    WETH public weth;
+    IERC20 public dai;
+    IERC20 public inch;
+    IERC20 public usdc;
+    IWETH public weth;
     AggregatorMock public daiOracle;
     AggregatorMock public inchOracle;
     ILimitOrderProtocol public swap;
@@ -52,53 +53,43 @@ contract Deployers is Test, TychoRouterTestSetup {
         (takerAddr, takerPK) = makeAddrAndKey("takerAddr");
         (treasurerAddr, treasurerPK) = makeAddrAndKey("treasurerAddr");
         // Mint tokens to test addresses
-        daiMock.mint(takerAddr, 1_000_000 ether);
-        daiMock.mint(makerAddr, 1_000_000 ether);
-        inchMock.mint(takerAddr, 1_000_000 ether);
-        inchMock.mint(makerAddr, 1_000_000 ether);
-        DAI.mint(takerAddr, 1_000_000 ether);
-        DAI.mint(makerAddr, 1_000_000 ether);
-        WETH.mint(takerAddr, 1_000_000 ether);
-        WETH.mint(makerAddr, 1_000_000 ether);
+        deal(address(dai), takerAddr, 1_000_000 ether);
+        deal(address(dai), makerAddr, 1_000_000 ether);
+        deal(address(inch), takerAddr, 1_000_000 ether);
+        deal(address(inch), makerAddr, 1_000_000 ether);
 
         // Setup WETH deposits
         vm.deal(makerAddr, 100 ether);
         vm.deal(takerAddr, 100 ether);
         vm.prank(makerAddr);
-        wethMock.deposit{value: 100 ether}();
+        weth.deposit{value: 100 ether}();
         vm.prank(takerAddr);
-        wethMock.deposit{value: 100 ether}();
-        vm.deal(makerAddr, 100 ether);
-        vm.deal(takerAddr, 100 ether);
-        vm.prank(makerAddr);
-        wethMock.deposit{value: 100 ether}();
-        vm.prank(takerAddr);
-        wethMock.deposit{value: 100 ether}();
+        weth.deposit{value: 100 ether}();
 
         // Approve tokens for swap contract
         vm.prank(makerAddr);
-        daiMock.approve(address(swap), 1_000_000 ether);
+        dai.approve(address(swap), 1_000_000 ether);
         vm.prank(makerAddr);
-        wethMock.approve(address(swap), 1_000_000 ether);
+        weth.approve(address(swap), 1_000_000 ether);
         vm.prank(makerAddr);
-        inchMock.approve(address(swap), 1_000_000 ether);
+        inch.approve(address(swap), 1_000_000 ether);
 
         vm.prank(takerAddr);
-        daiMock.approve(address(swap), 1_000_000 ether);
+        dai.approve(address(swap), 1_000_000 ether);
         vm.prank(takerAddr);
-        wethMock.approve(address(swap), 1_000_000 ether);
+        weth.approve(address(swap), 1_000_000 ether);
         vm.prank(takerAddr);
-        inchMock.approve(address(swap), 1_000_000 ether);
+        inch.approve(address(swap), 1_000_000 ether);
     }
 
     function deploySwapTokens() internal {
-        daiMock = new MockERC20("Test Token", "TEST", 18);
-        daiMock.mint(address(this), 10_000_000 ether);
-        wethMock = new WETH();
-        inchMock = new MockERC20("1INCH", "1INCH", 18);
-        inchMock.mint(address(this), 10_000_000 ether);
-        usdcMock = new MockERC20("USDC", "USDC", 6);
-        usdc.mint(address(this), 10_000_000 ether);
+        dai = IERC20(DAI_ADDR);
+        deal(address(dai), address(this), 10_000_000 ether);
+        weth = IWETH(WETH_ADDR);
+        inch = IERC20(INCH_ADDR);
+        deal(address(inch), address(this), 10_000_000 ether);
+        usdc = IERC20(USDC_ADDR);
+        deal(address(usdc), address(this), 10_000_000 ether);
     }
 
     function deployPermit2() internal {

@@ -921,7 +921,8 @@ contract SwapExecutorTest is Test, Deployers {
         vm.deal(unauthorizedTaker, 1 ether);
         vm.prank(unauthorizedTaker);
         weth.deposit{value: 1 ether}();
-        dai.mint(unauthorizedTaker, 4000 ether);
+        // dai.mint(unauthorizedTaker, 4000 ether);
+        deal(address(dai), unauthorizedTaker, 4000 ether);
 
         // Build a simple order
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
