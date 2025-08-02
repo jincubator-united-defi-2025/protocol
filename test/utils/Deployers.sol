@@ -16,8 +16,9 @@ import {Dispatcher} from "src/Dispatcher.sol";
 import {ChainLinkCalculator} from "src/ChainLinkCalculator.sol";
 import {RebalancerInteraction} from "src/RebalancerInteraction.sol";
 import {SwapExecutor} from "src/SwapExecutor.sol";
+import {TychoRouterTestSetup} from "test/tycho/TychoRouterTestSetup.sol";
 
-contract Deployers is Test {
+contract Deployers is Test, TychoRouterTestSetup {
     // Helpful Test Constants
     address constant ZERO_ADDRESS = address(0);
 
@@ -110,6 +111,7 @@ contract Deployers is Test {
     }
 
     function setUp() public {
+        tychoSetUp();
         deployPermit2();
         deploySwapTokens();
         daiOracle = new AggregatorMock(1000000000000000000);
