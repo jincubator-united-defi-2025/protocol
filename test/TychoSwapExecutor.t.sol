@@ -65,14 +65,19 @@ contract TychoSwapExecutorTest is Test, Deployers {
         return uint256(answer);
     }
 
-    function createTychoSingleSwapUniswapV2(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut)
-        internal
-        returns (bytes memory tychoSwap)
-    {
+    // function createTychoSingleSwapUniswapV2(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut)
+    function createTychoSingleSwapUniswapV2(
+        address tokenIn,
+        address target,
+        address receiver,
+        bool zero2one,
+        RestrictTransferFrom.TransferType transferType
+    ) internal returns (bytes memory tychoSwap) {
         bytes memory protocolData =
             encodeUniswapV2Swap(WETH_ADDR, WETH_DAI_POOL, ALICE, false, RestrictTransferFrom.TransferType.TransferFrom);
 
-        bytes memory tychooSwap = encodeSingleSwap(address(usv2Executor), protocolData);
+        tychoSwap = encodeSingleSwap(address(usv2Executor), protocolData);
+        return tychoSwap;
     }
 
     function testSingleSwapNoPermit2() public {
@@ -157,9 +162,24 @@ contract TychoSwapExecutorTest is Test, Deployers {
 
         // ===== Begin of Taker Tasks =====
         // Create Tycho Swap
+        // bytes memory tychoSwap = createTychoSingleSwapUniswapV2(
+        //     address(baseOrder.makerAsset), address(baseOrder.takerAsset), baseOrder.makingAmount, baseOrder.takingAmount
+        // );
+        // WETH_ADDR, WETH_DAI_POOL, ALICE, false, RestrictTransferFrom.TransferType.TransferFrom
+        // TODO: Dynamically poulate the target fields
         bytes memory tychoSwap = createTychoSingleSwapUniswapV2(
-            address(baseOrder.makerAsset), address(baseOrder.takerAsset), baseOrder.makingAmount, baseOrder.takingAmount
+            address(baseOrder.makerAsset), // address tokenIn,
+            WETH_DAI_POOL, // address target this is the pool address
+            makerAddr, // address receiver,
+            false, // bool zero2one,
+            RestrictTransferFrom.TransferType.TransferFrom // RestrictTransferFrom.TransferType transferType
         );
+
+        // bytes memory tychoSwap = createTychoSingleSwapUniswapV2(
+        //     WETH_ADDR, WETH_DAI_POOL, ALICE, false, RestrictTransferFrom.TransferType.TransferFrom
+        // );
+        console2.log("tychoSwap Below");
+        console2.logBytes(tychoSwap);
 
         // Build taker traits
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -174,7 +194,7 @@ contract TychoSwapExecutorTest is Test, Deployers {
                 // address(swapExecutor), hex"0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
                 address(tychoSwapExecutor),
                 tychoSwap
-            ), // interaction with TychoSwapExecutor TODO fill this out with swap payload
+            ),
             0.99 ether // threshold
         );
         console2.log("takerTraits Below");

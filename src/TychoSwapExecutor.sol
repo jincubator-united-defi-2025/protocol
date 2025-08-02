@@ -61,10 +61,18 @@ contract TychoSwapExecutor is ITakerInteraction {
         uint256 remainingMakingAmount,
         bytes calldata extraData
     ) external override {
-        console2.log("SwapExecutor: takerInteraction");
+        console2.log("TychoSwapExecutor: takerInteraction");
         console2.log("extraData Below");
         console2.logBytes(extraData);
-        bytes memory tychoSwap = abi.decode(extraData, (bytes));
+        // bytes memory tychoSwap = abi.decode(extraData, (bytes));
+        // Extract the address (first 20 bytes)
+        address tychoExecutor = address(uint160(bytes20(extraData[:20])));
+        console2.log("TychoSwapExecutor: tychoExecutor");
+        console2.log(tychoExecutor);
+        // Get the remaining bytes as the swap data
+        bytes memory tychoSwap = extraData[20:];
+        console2.log("TychoSwapExecutor: tychoSwap");
+        console2.logBytes(tychoSwap);
         // console2.logbytes32("SwapExecutor: orderHash", orderHash);
         // console2.logbytes32(orderHash);
         console2.log("SwapExecutor: taker", taker);
