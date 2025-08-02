@@ -2,11 +2,11 @@
 pragma solidity ^0.8.23;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {ChainlinkCalculator} from "src/ChainlinkCalculator.sol";
+import {ChainLinkCalculator} from "src/ChainLinkCalculator.sol";
 import {Deployers} from "test/utils/Deployers.sol";
-import {OrderUtils} from "test/utils/OrderUtils.sol";
-import {LimitOrderProtocol} from "@jincubator/limit-order-protocol/contracts/LimitOrderProtocol.sol";
-import {AggregatorMock} from "@jincubator/limit-order-protocol/contracts/mocks/AggregatorMock.sol";
+import {OrderUtils} from "test/utils/orderUtils/OrderUtils.sol";
+// import {LimitOrderProtocol} from "@jincubator/limit-order-protocol/contracts/LimitOrderProtocol.sol";
+import {AggregatorMock} from "src/mocks/1inch/AggregatorMock.sol";
 import {MockERC20} from "solmate/src/test/utils/mocks/MockERC20.sol";
 import {WETH} from "the-compact/lib/solady/src/tokens/WETH.sol";
 import {IWETH} from "@1inch/solidity-utils/contracts/interfaces/IWETH.sol";
@@ -150,19 +150,19 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
     function test_eth_to_dai_chainlink_order() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         // DAI oracle: 1 ETH = 4000 DAI (0.00025 ETH per DAI)
         daiOracle = new AggregatorMock(0.00025 ether);
 
-        address chainlinkCalcAddress = address(chainlinkCalculator);
+        address chainlinkCalcAddress = address(chainLinkCalculator);
         address oracleAddress = address(daiOracle);
 
         // Build order with chainlink price data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(weth),
             takerAsset: address(dai),
@@ -202,8 +202,8 @@ contract ChainLinkCalculatorTest is Test, Deployers {
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
         console2.log("Order hash:", uint256(orderData));
-        console2.log("Expected maker:", addr1);
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        console2.log("Expected maker:", makerAddr);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -218,38 +218,38 @@ contract ChainLinkCalculatorTest is Test, Deployers {
         );
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrWethBalanceBefore = weth.balanceOf(addr2);
-        uint256 addr1WethBalanceBefore = weth.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrWethBalanceBefore = weth.balanceOf(takerAddr);
+        uint256 makerAddrWethBalanceBefore = weth.balanceOf(makerAddr);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, 4000 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Verify balance changes
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore - 4000 ether);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore + 4000 ether);
-        assertEq(weth.balanceOf(addr2), addrWethBalanceBefore + 0.99 ether);
-        assertEq(weth.balanceOf(addr1), addr1WethBalanceBefore - 0.99 ether);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - 4000 ether);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + 4000 ether);
+        assertEq(weth.balanceOf(takerAddr), addrWethBalanceBefore + 0.99 ether);
+        assertEq(weth.balanceOf(makerAddr), makerAddrWethBalanceBefore - 0.99 ether);
     }
 
     function test_dai_to_eth_chainlink_order() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
 
-        address chainlinkCalcAddress = address(chainlinkCalculator);
+        address chainlinkCalcAddress = address(chainLinkCalculator);
         address oracleAddress = address(daiOracle);
 
         // Build order with chainlink price data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(dai),
             takerAsset: address(weth),
@@ -287,7 +287,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits with makingAmount flag
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -302,33 +302,33 @@ contract ChainLinkCalculatorTest is Test, Deployers {
         );
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrWethBalanceBefore = weth.balanceOf(addr2);
-        uint256 addr1WethBalanceBefore = weth.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrWethBalanceBefore = weth.balanceOf(takerAddr);
+        uint256 makerAddrWethBalanceBefore = weth.balanceOf(makerAddr);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, 4000 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Verify balance changes
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore + 4000 ether);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore - 4000 ether);
-        assertEq(weth.balanceOf(addr2), addrWethBalanceBefore - 1.01 ether);
-        assertEq(weth.balanceOf(addr1), addr1WethBalanceBefore + 1.01 ether);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore + 4000 ether);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore - 4000 ether);
+        assertEq(weth.balanceOf(takerAddr), addrWethBalanceBefore - 1.01 ether);
+        assertEq(weth.balanceOf(makerAddr), makerAddrWethBalanceBefore + 1.01 ether);
     }
 
     function test_dai_to_1inch_chainlink_order_takingAmountData() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether); // 1 ETH = 4000 DAI
         inchOracle = new AggregatorMock(1577615249227853); // 1 INCH = 0.0001577615249227853 ETH
 
-        address chainlinkCalcAddress = address(chainlinkCalculator);
+        address chainlinkCalcAddress = address(chainLinkCalculator);
         address oracleAddress1 = address(inchOracle);
         address oracleAddress2 = address(daiOracle);
 
@@ -340,7 +340,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
         // Build order with double price data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(inch),
             takerAsset: address(dai),
@@ -380,7 +380,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits with makingAmount flag
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -395,13 +395,13 @@ contract ChainLinkCalculatorTest is Test, Deployers {
         );
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrInchBalanceBefore = inch.balanceOf(addr2);
-        uint256 addr1InchBalanceBefore = inch.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrInchBalanceBefore = inch.balanceOf(takerAddr);
+        uint256 makerAddrInchBalanceBefore = inch.balanceOf(makerAddr);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, makingAmount, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
@@ -411,23 +411,23 @@ contract ChainLinkCalculatorTest is Test, Deployers {
             makingAmount * takingSpread / 1e9 * getOracleAnswer(inchOracle) / getOracleAnswer(daiOracle);
 
         // Verify balance changes
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore - realTakingAmount);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore + realTakingAmount);
-        assertEq(inch.balanceOf(addr2), addrInchBalanceBefore + makingAmount);
-        assertEq(inch.balanceOf(addr1), addr1InchBalanceBefore - makingAmount);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - realTakingAmount);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + realTakingAmount);
+        assertEq(inch.balanceOf(takerAddr), addrInchBalanceBefore + makingAmount);
+        assertEq(inch.balanceOf(makerAddr), makerAddrInchBalanceBefore - makingAmount);
     }
 
     function test_dai_to_1inch_chainlink_order_makingAmountData() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        // The ChainlinkCalculator checks if updatedAt + 4 hours < block.timestamp
+        // The chainLinkCalculator  checks if updatedAt + 4 hours < block.timestamp
         // Minimum advancement needed: 99 seconds
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether); // 1 ETH = 4000 DAI
         inchOracle = new AggregatorMock(1577615249227853); // 1 INCH = 0.0001577615249227853 ETH
 
-        address chainlinkCalcAddress = address(chainlinkCalculator);
+        address chainlinkCalcAddress = address(chainLinkCalculator);
         address oracleAddress1 = address(inchOracle);
         address oracleAddress2 = address(daiOracle);
 
@@ -439,7 +439,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
         // Build order with double price data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(inch),
             takerAsset: address(dai),
@@ -479,7 +479,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -494,13 +494,13 @@ contract ChainLinkCalculatorTest is Test, Deployers {
         );
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrInchBalanceBefore = inch.balanceOf(addr2);
-        uint256 addr1InchBalanceBefore = inch.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrInchBalanceBefore = inch.balanceOf(takerAddr);
+        uint256 makerAddrInchBalanceBefore = inch.balanceOf(makerAddr);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, takingAmount, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
@@ -510,15 +510,15 @@ contract ChainLinkCalculatorTest is Test, Deployers {
             takingAmount * makingSpread / 1e9 * getOracleAnswer(daiOracle) / getOracleAnswer(inchOracle);
 
         // Verify balance changes
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore - takingAmount);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore + takingAmount);
-        assertEq(inch.balanceOf(addr2), addrInchBalanceBefore + realMakingAmount);
-        assertEq(inch.balanceOf(addr1), addr1InchBalanceBefore - realMakingAmount);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - takingAmount);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + takingAmount);
+        assertEq(inch.balanceOf(takerAddr), addrInchBalanceBefore + realMakingAmount);
+        assertEq(inch.balanceOf(makerAddr), makerAddrInchBalanceBefore - realMakingAmount);
     }
 
     function test_dai_to_1inch_stop_loss_order() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
@@ -529,19 +529,19 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
         // Build price call for predicate
         bytes memory priceCall =
-            abi.encodeWithSelector(chainlinkCalculator.doublePrice.selector, inchOracle, daiOracle, int256(0), 1 ether);
+            abi.encodeWithSelector(chainLinkCalculator.doublePrice.selector, inchOracle, daiOracle, int256(0), 1 ether);
 
         // Build predicate call
         bytes memory predicate = abi.encodeWithSelector(
             swap.lt.selector,
             6.32 ether,
-            abi.encodeWithSelector(swap.arbitraryStaticCall.selector, address(chainlinkCalculator), priceCall)
+            abi.encodeWithSelector(swap.arbitraryStaticCall.selector, address(chainLinkCalculator), priceCall)
         );
 
         // Build order with predicate
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(inch),
             takerAsset: address(dai),
@@ -565,7 +565,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits with makingAmount flag
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -580,27 +580,27 @@ contract ChainLinkCalculatorTest is Test, Deployers {
         );
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrInchBalanceBefore = inch.balanceOf(addr2);
-        uint256 addr1InchBalanceBefore = inch.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrInchBalanceBefore = inch.balanceOf(takerAddr);
+        uint256 makerAddrInchBalanceBefore = inch.balanceOf(makerAddr);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, makingAmount, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Verify balance changes
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore - takingAmount);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore + takingAmount);
-        assertEq(inch.balanceOf(addr2), addrInchBalanceBefore + makingAmount);
-        assertEq(inch.balanceOf(addr1), addr1InchBalanceBefore - makingAmount);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - takingAmount);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + takingAmount);
+        assertEq(inch.balanceOf(takerAddr), addrInchBalanceBefore + makingAmount);
+        assertEq(inch.balanceOf(makerAddr), makerAddrInchBalanceBefore - makingAmount);
     }
 
     function test_dai_to_1inch_stop_loss_order_predicate_invalid() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
@@ -611,7 +611,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
         // Build price call for predicate (invalid threshold)
         bytes memory priceCall =
-            abi.encodeWithSelector(chainlinkCalculator.doublePrice.selector, inchOracle, daiOracle, int256(0), 1 ether);
+            abi.encodeWithSelector(chainLinkCalculator.doublePrice.selector, inchOracle, daiOracle, int256(0), 1 ether);
 
         // Build predicate call with invalid threshold
         bytes memory predicate = abi.encodeWithSelector(
@@ -623,7 +623,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
         // Build order with predicate
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(inch),
             takerAsset: address(dai),
@@ -647,7 +647,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits with makingAmount flag
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -662,7 +662,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
         );
 
         // Expect the transaction to revert due to invalid predicate
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         vm.expectRevert();
         swap.fillOrderArgs(
             convertOrder(order), r, vs, makingAmount, TakerTraits.wrap(takerTraits.traits), takerTraits.args
@@ -671,7 +671,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
     function test_eth_to_dai_stop_loss_order() public {
         // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 99 seconds);
+        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
@@ -689,14 +689,14 @@ contract ChainLinkCalculatorTest is Test, Deployers {
         // Build predicate call
         bytes memory predicate = abi.encodeWithSelector(
             swap.lt.selector,
-            0.0002501 ether, // Threshold
+            0.0002501 ether, // Threshold - higher than oracle value to make predicate true
             latestAnswerCall
         );
 
         // Build order with predicate
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(weth),
             takerAsset: address(dai),
@@ -720,7 +720,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits with makingAmount flag
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -735,29 +735,29 @@ contract ChainLinkCalculatorTest is Test, Deployers {
         );
 
         // Record initial balances
-        uint256 addrDaiBalanceBefore = dai.balanceOf(addr2);
-        uint256 addr1DaiBalanceBefore = dai.balanceOf(addr1);
-        uint256 addrWethBalanceBefore = weth.balanceOf(addr2);
-        uint256 addr1WethBalanceBefore = weth.balanceOf(addr1);
+        uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
+        uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
+        uint256 addrWethBalanceBefore = weth.balanceOf(takerAddr);
+        uint256 makerAddrWethBalanceBefore = weth.balanceOf(makerAddr);
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, makingAmount, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Verify balance changes
-        assertEq(dai.balanceOf(addr2), addrDaiBalanceBefore - takingAmount);
-        assertEq(dai.balanceOf(addr1), addr1DaiBalanceBefore + takingAmount);
-        assertEq(weth.balanceOf(addr2), addrWethBalanceBefore + makingAmount);
-        assertEq(weth.balanceOf(addr1), addr1WethBalanceBefore - makingAmount);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - takingAmount);
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + takingAmount);
+        assertEq(weth.balanceOf(takerAddr), addrWethBalanceBefore + makingAmount);
+        assertEq(weth.balanceOf(makerAddr), makerAddrWethBalanceBefore - makingAmount);
     }
 
     function test_simple_order_without_extension() public {
         // Build a simple order without any extension data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 1,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(weth),
             takerAsset: address(dai),
@@ -782,7 +782,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits without extension
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -797,23 +797,23 @@ contract ChainLinkCalculatorTest is Test, Deployers {
         );
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, 4000 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Check balances
-        assertEq(dai.balanceOf(addr2), 996000000000000000000000, "addr2 DAI balance");
-        assertEq(dai.balanceOf(addr1), 1004000000000000000000000, "addr1 DAI balance");
-        assertEq(weth.balanceOf(addr2), 101000000000000000000, "addr2 WETH balance");
-        assertEq(weth.balanceOf(addr1), 99000000000000000000, "addr1 WETH balance");
+        assertEq(dai.balanceOf(takerAddr), 996000000000000000000000, "takerAddr DAI balance");
+        assertEq(dai.balanceOf(makerAddr), 1004000000000000000000000, "makerAddr DAI balance");
+        assertEq(weth.balanceOf(takerAddr), 101000000000000000000, "takerAddr WETH balance");
+        assertEq(weth.balanceOf(makerAddr), 99000000000000000000, "makerAddr WETH balance");
     }
 
     function test_simple_order_with_different_amounts() public {
         // Build a simple order without any extension data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 2,
-            maker: addr1,
+            maker: makerAddr,
             receiver: address(0),
             makerAsset: address(weth),
             takerAsset: address(dai),
@@ -838,7 +838,7 @@ contract ChainLinkCalculatorTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits without extension
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -853,16 +853,16 @@ contract ChainLinkCalculatorTest is Test, Deployers {
         );
 
         // Fill the order
-        vm.prank(addr2);
+        vm.prank(takerAddr);
         swap.fillOrderArgs(
             convertOrder(order), r, vs, 2000 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Check balances
-        assertEq(dai.balanceOf(addr2), 998000000000000000000000, "addr2 DAI balance");
-        assertEq(dai.balanceOf(addr1), 1002000000000000000000000, "addr1 DAI balance");
-        assertEq(weth.balanceOf(addr2), 100500000000000000000, "addr2 WETH balance");
-        assertEq(weth.balanceOf(addr1), 99500000000000000000, "addr1 WETH balance");
+        assertEq(dai.balanceOf(takerAddr), 998000000000000000000000, "takerAddr DAI balance");
+        assertEq(dai.balanceOf(makerAddr), 1002000000000000000000000, "makerAddr DAI balance");
+        assertEq(weth.balanceOf(takerAddr), 100500000000000000000, "takerAddr WETH balance");
+        assertEq(weth.balanceOf(makerAddr), 99500000000000000000, "makerAddr WETH balance");
     }
 
     // Helper function to convert OrderUtils.Order to IOrderMixin.Order
@@ -880,8 +880,8 @@ contract ChainLinkCalculatorTest is Test, Deployers {
     }
 
     // Helper function to sign order and create vs
-    function signOrder(bytes32 orderData) internal view returns (bytes32 r, bytes32 vs) {
-        (uint8 v, bytes32 r_, bytes32 s) = vm.sign(pkAddr1, orderData);
+    function signOrder(uint256 privateKey, bytes32 orderData) internal view returns (bytes32 r, bytes32 vs) {
+        (uint8 v, bytes32 r_, bytes32 s) = vm.sign(privateKey, orderData);
         r = r_;
         // yParityAndS format: s | (v << 255)
         // v should be 27 or 28, we need to convert to 0 or 1 for yParity

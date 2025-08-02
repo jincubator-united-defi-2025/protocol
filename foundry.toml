@@ -1,6 +1,8 @@
 [profile.default]
-solc_version = "0.8.23"
-evm_version = "shanghai"
+# solc_version = "0.8.23"
+# evm_version = "shanghai"
+solc_version = "0.8.30"
+evm_version = "prague"
 
 ffi = true
 fs_permissions = [{access = "read-write", path = ".forge-snapshots/"}]
@@ -18,10 +20,11 @@ remappings = [
     "@forge-std/=lib/forge-std/src/",
     "@jincubator/limit-order-protocol/=lib/limit-order-protocol/",
     "@1inch/solidity-utils/=lib/solidity-utils/",
-    "@jincubator/the-compact-order-protocol/=lib/the-compact",
-    "@jincubator/tycho-execution=/lib/tycho-execution",
+    "@jincubator/the-compact/=lib/the-compact/",
+    "@jincubator/tycho-execution/=lib/tycho-execution/",
     "@openzeppelin/=lib/tycho-execution/foundry/lib/openzeppelin-contracts/",
-    "@chainlink=lib/chainlink"
+    "@chainlink/=lib/chainlink/",
+    "@permit2/=lib/tycho-execution/foundry/lib/permit2/"
 ]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

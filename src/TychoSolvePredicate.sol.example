@@ -10,7 +10,7 @@ import "@jincubator/limit-order-protocol/contracts/interfaces/IAmountGetter.sol"
 // solhint-disable not-rely-on-time
 
 /// @title A helper contract for interactions with https://docs.chain.link
-contract ChainLinkCalculator is IAmountGetter {
+contract TychoSolvePredicate is IAmountGetter {
     using SafeCast for int256;
 
     error DifferentOracleDecimals();

@@ -2,67 +2,79 @@
 pragma solidity ^0.8.23;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {ChainlinkCalculator} from "src/ChainlinkCalculator.sol";
 import {MockERC20} from "solmate/src/test/utils/mocks/MockERC20.sol";
 import {ERC20} from "the-compact/lib/solady/src/tokens/ERC20.sol";
 import {WETH} from "the-compact/lib/solady/src/tokens/WETH.sol";
 import {IWETH} from "@1inch/solidity-utils/contracts/interfaces/IWETH.sol";
-import {LimitOrderProtocol} from "@jincubator/limit-order-protocol/contracts/LimitOrderProtocol.sol";
-import {ChainlinkCalculator} from "src/ChainlinkCalculator.sol";
-import {AggregatorMock} from "@jincubator/limit-order-protocol/contracts/mocks/AggregatorMock.sol";
+import {IPermit2} from "permit2/src/interfaces/IPermit2.sol";
+// import {LimitOrderProtocol} from "@jincubator/limit-order-protocol/contracts/LimitOrderProtocol.sol";
+import {ILimitOrderProtocol} from "src/interfaces/1inch/ILimitOrderProtocol.sol";
+import {Permit2Deployer} from "test/helpers/Permit2.sol";
+import {LimitOrderProtocolDeployer} from "test/helpers/LimitOrderProtocolManager.sol";
+import {AggregatorMock} from "src/mocks/1inch/AggregatorMock.sol";
+import {Dispatcher} from "src/Dispatcher.sol";
+import {ChainLinkCalculator} from "src/ChainLinkCalculator.sol";
+import {RebalancerInteraction} from "src/RebalancerInteraction.sol";
+import {SwapExecutor} from "src/SwapExecutor.sol";
 
 contract Deployers is Test {
     // Helpful Test Constants
     address constant ZERO_ADDRESS = address(0);
 
     // Global Variables
-    ChainlinkCalculator public chainLinkCalculator;
+    uint256 public chainId = 1;
+    IPermit2 permit2;
     MockERC20 public dai;
-    WETH public weth;
     MockERC20 public inch;
     MockERC20 public usdc;
-    LimitOrderProtocol public swap;
-    ChainlinkCalculator public chainlinkCalculator;
+    WETH public weth;
     AggregatorMock public daiOracle;
     AggregatorMock public inchOracle;
-    uint256 public chainId = 1;
+    ILimitOrderProtocol public swap;
+    Dispatcher public dispatcher;
+    ChainLinkCalculator public chainLinkCalculator;
+    RebalancerInteraction public rebalancerInteraction;
+    SwapExecutor public swapExecutor;
 
     // Test users - global variables
-    address public addr1;
-    uint256 public pkAddr1;
-    address public addr2;
-    uint256 public pkAddr2;
+    address public makerAddr;
+    uint256 public makerPK;
+    address public takerAddr;
+    uint256 public takerPK;
+    address public treasurerAddr; //TODO: Create a Treasurer contract
+    uint256 public treasurerPK;
 
     function setupUsers() internal {
-        (addr1, pkAddr1) = makeAddrAndKey("addr1");
-        (addr2, pkAddr2) = makeAddrAndKey("addr2");
+        (makerAddr, makerPK) = makeAddrAndKey("makerAddr");
+        (takerAddr, takerPK) = makeAddrAndKey("takerAddr");
+        (treasurerAddr, treasurerPK) = makeAddrAndKey("treasurerAddr");
         // Mint tokens to test addresses
-        dai.mint(addr2, 1_000_000 ether);
-        dai.mint(addr1, 1_000_000 ether);
-        inch.mint(addr2, 1_000_000 ether);
-        inch.mint(addr1, 1_000_000 ether);
+        dai.mint(takerAddr, 1_000_000 ether);
+        dai.mint(makerAddr, 1_000_000 ether);
+        inch.mint(takerAddr, 1_000_000 ether);
+        inch.mint(makerAddr, 1_000_000 ether);
 
         // Setup WETH deposits
-        vm.deal(addr2, 100 ether);
-        vm.deal(addr1, 100 ether);
-        vm.prank(addr2);
+        vm.deal(makerAddr, 100 ether);
+        vm.deal(takerAddr, 100 ether);
+        vm.prank(makerAddr);
         weth.deposit{value: 100 ether}();
-        vm.prank(addr1);
+        vm.prank(takerAddr);
         weth.deposit{value: 100 ether}();
 
         // Approve tokens for swap contract
-        vm.prank(addr2);
+        vm.prank(makerAddr);
         dai.approve(address(swap), 1_000_000 ether);
-        vm.prank(addr2);
+        vm.prank(makerAddr);
         weth.approve(address(swap), 1_000_000 ether);
-        vm.prank(addr2);
+        vm.prank(makerAddr);
         inch.approve(address(swap), 1_000_000 ether);
 
-        vm.prank(addr1);
+        vm.prank(takerAddr);
         dai.approve(address(swap), 1_000_000 ether);
-        vm.prank(addr1);
+        vm.prank(takerAddr);
         weth.approve(address(swap), 1_000_000 ether);
-        vm.prank(addr1);
+        vm.prank(takerAddr);
         inch.approve(address(swap), 1_000_000 ether);
     }
 
@@ -76,13 +88,37 @@ contract Deployers is Test {
         usdc.mint(address(this), 10_000_000 ether);
     }
 
+    function deployPermit2() internal {
+        address permit2Address = address(0x000000000022D473030F116dDEE9F6B43aC78BA3); // Same on all chains.
+
+        if (permit2Address.code.length > 0) {
+            // Permit2 is already deployed, no need to etch it.
+        } else {
+            address tempDeployAddress = address(Permit2Deployer.deploy());
+
+            vm.etch(permit2Address, tempDeployAddress.code);
+        }
+
+        permit2 = IPermit2(permit2Address);
+        vm.label(permit2Address, "Permit2");
+    }
+
+    function deployLimitOrderProtocol(address weth) internal {
+        swap = ILimitOrderProtocol(address(LimitOrderProtocolDeployer.deploy(weth, address(permit2))));
+
+        vm.label(address(swap), "LimitOrderProtocol");
+    }
+
     function deployArtifacts() internal {
-        chainLinkCalculator = new ChainlinkCalculator();
+        deployPermit2();
         deploySwapTokens();
-        swap = new LimitOrderProtocol(IWETH(address(weth)));
-        chainlinkCalculator = new ChainlinkCalculator();
         daiOracle = new AggregatorMock(1000000000000000000);
         inchOracle = new AggregatorMock(1000000000000000000);
+        deployLimitOrderProtocol(address(weth));
+        dispatcher = new Dispatcher();
+        chainLinkCalculator = new ChainLinkCalculator();
+        swapExecutor = new SwapExecutor(address(dispatcher));
         setupUsers();
+        rebalancerInteraction = new RebalancerInteraction(address(treasurerAddr));
     }
 }
