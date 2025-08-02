@@ -88,6 +88,21 @@ contract Deployers is Test, TychoRouterTestSetup {
         weth.approve(address(swap), 1_000_000 ether);
         vm.prank(takerAddr);
         inch.approve(address(swap), 1_000_000 ether);
+
+        // Approve tokens for resource manager
+        vm.prank(makerAddr);
+        dai.approve(address(resourceManager), type(uint256).max);
+        vm.prank(makerAddr);
+        weth.approve(address(resourceManager), type(uint256).max);
+        vm.prank(makerAddr);
+        inch.approve(address(resourceManager), type(uint256).max);
+
+        vm.prank(takerAddr);
+        dai.approve(address(resourceManager), type(uint256).max);
+        vm.prank(takerAddr);
+        weth.approve(address(resourceManager), type(uint256).max);
+        vm.prank(takerAddr);
+        inch.approve(address(resourceManager), type(uint256).max);
     }
 
     function deploySwapTokens() internal {
@@ -128,12 +143,13 @@ contract Deployers is Test, TychoRouterTestSetup {
         daiOracle = new AggregatorMock(1000000000000000000);
         inchOracle = new AggregatorMock(1000000000000000000);
         deployLimitOrderProtocol(address(weth));
+        dispatcher = new Dispatcher();
         oracleCalculator = new OracleCalculator();
         tychoSwapExecutor = new TychoSwapExecutor(address(dispatcher), payable(tychoRouter));
-        setupUsers();
-        rebalancerInteraction = new RebalancerInteraction(address(treasurerAddr));
         resourceManager = new ResourceManager(mockTheCompact, address(this));
         compact = new Compact(address(resourceManager));
+        setupUsers();
+        rebalancerInteraction = new RebalancerInteraction(address(treasurerAddr));
         compactInteraction = new CompactInteraction(treasurer, address(resourceManager), mockTheCompact);
     }
 }
