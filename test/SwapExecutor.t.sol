@@ -19,13 +19,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract SwapExecutorTest is Test, Deployers {
     using OrderUtils for *;
 
-    // address public treasurerAddr; // Treasurer address
-
-    function setUp() public {
-        // Deploy contracts
-        deployArtifacts();
-    }
-
     function buildSinglePriceCalldata(address chainlinkCalcAddress, address oracleAddress, uint256 spread, bool inverse)
         internal
         pure
@@ -928,7 +921,8 @@ contract SwapExecutorTest is Test, Deployers {
         vm.deal(unauthorizedTaker, 1 ether);
         vm.prank(unauthorizedTaker);
         weth.deposit{value: 1 ether}();
-        dai.mint(unauthorizedTaker, 4000 ether);
+        // dai.mint(unauthorizedTaker, 4000 ether);
+        deal(address(dai), unauthorizedTaker, 4000 ether);
 
         // Build a simple order
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
