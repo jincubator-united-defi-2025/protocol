@@ -2,6 +2,9 @@
 pragma solidity ^0.8.30;
 
 import {Test, console2} from "forge-std/Test.sol";
+import "@jincubator/tycho-execution/foundry/src/executors/UniswapV4Executor.sol";
+import {TychoRouter} from "@jincubator/tycho-execution/foundry/src/TychoRouter.sol";
+import "@jincubator/tycho-execution/foundry/test/TychoRouterTestSetup.sol";
 import {ChainLinkCalculator} from "src/ChainLinkCalculator.sol";
 import {Deployers} from "test/utils/Deployers.sol";
 import {OrderUtils} from "test/utils/orderUtils/OrderUtils.sol";
@@ -9,9 +12,9 @@ import {OrderUtils} from "test/utils/orderUtils/OrderUtils.sol";
 import {AggregatorMock} from "src/mocks/1inch/AggregatorMock.sol";
 import {MockERC20} from "solmate/src/test/utils/mocks/MockERC20.sol";
 import {WETH} from "the-compact/lib/solady/src/tokens/WETH.sol";
-import {IWETH} from "@1inch/solidity-utils/contracts/interfaces/IWETH.sol";
+// import {IWETH} from "@1inch/solidity-utils/contracts/interfaces/IWETH.sol";
 import {IOrderMixin} from "@jincubator/limit-order-protocol/contracts/interfaces/IOrderMixin.sol";
-import {Address} from "@1inch/solidity-utils/contracts/libraries/AddressLib.sol";
+import {Address as AddressLib} from "@1inch/solidity-utils/contracts/libraries/AddressLib.sol";
 import {MakerTraits} from "@jincubator/limit-order-protocol/contracts/libraries/MakerTraitsLib.sol";
 import {TakerTraits} from "@jincubator/limit-order-protocol/contracts/libraries/TakerTraitsLib.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -36,10 +39,10 @@ contract TychoSwapExecutorTest is Test, Deployers {
     function convertOrder(OrderUtils.Order memory order) internal pure returns (IOrderMixin.Order memory) {
         return IOrderMixin.Order({
             salt: order.salt,
-            maker: Address.wrap(uint256(uint160(order.maker))),
-            receiver: Address.wrap(uint256(uint160(order.receiver))),
-            makerAsset: Address.wrap(uint256(uint160(order.makerAsset))),
-            takerAsset: Address.wrap(uint256(uint160(order.takerAsset))),
+            maker: AddressLib.wrap(uint256(uint160(order.maker))),
+            receiver: AddressLib.wrap(uint256(uint160(order.receiver))),
+            makerAsset: AddressLib.wrap(uint256(uint160(order.makerAsset))),
+            takerAsset: AddressLib.wrap(uint256(uint160(order.takerAsset))),
             makingAmount: order.makingAmount,
             takingAmount: order.takingAmount,
             makerTraits: MakerTraits.wrap(order.makerTraits)
@@ -60,6 +63,34 @@ contract TychoSwapExecutorTest is Test, Deployers {
     function getOracleAnswer(AggregatorMock oracle) internal view returns (uint256) {
         (, int256 answer,,,) = oracle.latestRoundData();
         return uint256(answer);
+    }
+
+    function testSingleSwapNoPermit2() public {
+        // Trade 1 WETH for DAI with 1 swap on Uniswap V2
+        // Checks amount out at the end
+        uint256 amountIn = 1 ether;
+
+        deal(WETH_ADDR, ALICE, amountIn);
+        vm.startPrank(ALICE);
+        // Approve the tokenIn to be transferred to the router
+        IERC20(WETH_ADDR).approve(address(tychoRouterAddr), amountIn);
+
+        bytes memory protocolData =
+            encodeUniswapV2Swap(WETH_ADDR, WETH_DAI_POOL, ALICE, false, RestrictTransferFrom.TransferType.TransferFrom);
+
+        bytes memory swap = encodeSingleSwap(address(usv2Executor), protocolData);
+
+        uint256 minAmountOut = 2000 * 1e18;
+        uint256 amountOut =
+            tychoRouter.singleSwap(amountIn, WETH_ADDR, DAI_ADDR, minAmountOut, false, false, ALICE, true, swap);
+
+        uint256 expectedAmount = 2018817438608734439722;
+        assertEq(amountOut, expectedAmount);
+        uint256 daiBalance = IERC20(DAI_ADDR).balanceOf(ALICE);
+        assertEq(daiBalance, expectedAmount);
+        assertEq(IERC20(WETH_ADDR).balanceOf(ALICE), 0);
+
+        vm.stopPrank();
     }
 
     function test_eth_to_dai_chainlink_order_with_rebalancer_and_swapExecutor() public {
