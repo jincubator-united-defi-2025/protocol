@@ -59,12 +59,6 @@ contract TychoSwapExecutorTest is Test, Deployers {
         vs = bytes32(uint256(s) | (uint256(yParity) << 255));
     }
 
-    // Helper function to get oracle answer
-    function getOracleAnswer(AggregatorMock oracle) internal view returns (uint256) {
-        (, int256 answer,,,) = oracle.latestRoundData();
-        return uint256(answer);
-    }
-
     // function createTychoSingleSwapUniswapV2(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut)
     function createTychoSingleSwapUniswapV2(
         address tokenIn,
@@ -73,16 +67,13 @@ contract TychoSwapExecutorTest is Test, Deployers {
         bool zero2one,
         RestrictTransferFrom.TransferType transferType
     ) internal returns (bytes memory tychoSwap) {
-        bytes memory protocolData =
-        // encodeUniswapV2Swap(WETH_ADDR, WETH_DAI_POOL, ALICE, false, RestrictTransferFrom.TransferType.TransferFrom);
-        encodeUniswapV2Swap(
-            address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2),
-            WETH_DAI_POOL,
-            makerAddr,
+        bytes memory protocolData = encodeUniswapV2Swap(
+            tokenIn,
+            WETH_DAI_POOL, //TODO need to add dynamic pool lookups
+            receiver,
             false,
             RestrictTransferFrom.TransferType.Transfer
         );
-        //  encodeUniswapV2Swap(tokenIn, target, receiver, false, transferType);
 
         tychoSwap = encodeSingleSwap(address(usv2Executor), protocolData);
         return tychoSwap;
@@ -117,17 +108,7 @@ contract TychoSwapExecutorTest is Test, Deployers {
     }
 
     function test_eth_to_dai_chainlink_order_with_tychoSwapExecutor() public {
-        // Advance block timestamp to ensure oracle data is considered fresh
-        vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
-
-        // Setup oracles with specific prices
-        // DAI oracle: 1 ETH = 4000 DAI (0.00025 ETH per DAI)
-        daiOracle = new AggregatorMock(0.00025 ether);
-
-        address chainlinkCalcAddress = address(chainLinkCalculator);
-        address oracleAddress = address(daiOracle);
-
-        // Build order with chainlink price data
+        // Build order
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 0,
             maker: makerAddr,
@@ -139,7 +120,6 @@ contract TychoSwapExecutorTest is Test, Deployers {
             makerTraits: OrderUtils.buildMakerTraits(address(0), false, true, true, false, false, 0, 0, 0)
         });
 
-        bytes memory postInteractionData = buildPostInteractionCalldata(address(rebalancerInteraction));
         bytes memory takerInteractionData = buildTakerInteractionCalldata(address(swapExecutor));
 
         (OrderUtils.Order memory order, bytes memory extension) = OrderUtils.buildOrder(
@@ -148,13 +128,9 @@ contract TychoSwapExecutorTest is Test, Deployers {
             "", // takerAssetSuffix
             "", // makingAmountData
             "", // takingAmountData
-            // makingAmountData,
-            // takingAmountData,
             "", // predicate
             "", // permit
-            // takerInteractionData, // preInteraction SwapExecutor address
             "", // preInteraction SwapExecutor address
-            // postInteractionData, // postInteraction Rebalancer address
             "", // postInteraction
             ""
         );
@@ -163,21 +139,12 @@ contract TychoSwapExecutorTest is Test, Deployers {
         bytes32 orderData = swap.hashOrder(convertOrder(order));
         (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
-        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
-        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
-        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
-        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
-
         // Add approval for tychoSwapExecutor to spend WETH from takerAddr (needed for the swap)
         addApproval(takerAddr, address(tychoSwapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
 
         // ===== Begin of Taker Tasks =====
         // Create Tycho Swap
-        // bytes memory tychoSwap = createTychoSingleSwapUniswapV2(
-        //     address(baseOrder.makerAsset), address(baseOrder.takerAsset), baseOrder.makingAmount, baseOrder.takingAmount
-        // );
-        // WETH_ADDR, WETH_DAI_POOL, ALICE, false, RestrictTransferFrom.TransferType.TransferFrom
-        // TODO: Dynamically poulate the target fields
+        // TODO: Dynamically poulate the Pool address
         bytes memory tychoSwap = createTychoSingleSwapUniswapV2(
             address(baseOrder.makerAsset), // address tokenIn,
             WETH_DAI_POOL, // address target this is the pool address
@@ -185,12 +152,6 @@ contract TychoSwapExecutorTest is Test, Deployers {
             false, // bool zero2one,
             RestrictTransferFrom.TransferType.TransferFrom // RestrictTransferFrom.TransferType transferType
         );
-
-        // bytes memory tychoSwap = createTychoSingleSwapUniswapV2(
-        //     WETH_ADDR, WETH_DAI_POOL, ALICE, false, RestrictTransferFrom.TransferType.TransferFrom
-        // );
-        console2.log("tychoSwap Below");
-        console2.logBytes(tychoSwap);
 
         // Build taker traits
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -201,16 +162,9 @@ contract TychoSwapExecutorTest is Test, Deployers {
             "", // If set, then first 20 bytes of args are treated as target address for maker’s funds transfer
             "", // extension (Comes from OrderUtils.buildOrder)
             // Taker’s interaction calldata coded in args argument length: TODO fill this out with swap payload
-            abi.encodePacked(
-                // address(swapExecutor), hex"0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
-                address(tychoSwapExecutor),
-                tychoSwap
-            ),
+            abi.encodePacked(address(tychoSwapExecutor), tychoSwap),
             0.99 ether // threshold
         );
-        console2.log("takerTraits Below");
-        console2.logBytes(takerTraits.args);
-        console2.log("LimitOrderProtocol(address)", address(swap));
 
         // Record initial balances
         uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
