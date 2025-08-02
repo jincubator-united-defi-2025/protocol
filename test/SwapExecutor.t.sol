@@ -109,8 +109,9 @@ contract SwapExecutorTest is Test, Deployers {
             // takerInteractionData, // preInteraction SwapExecutor address
             "", // preInteraction SwapExecutor address
             postInteractionData, // postInteraction Rebalancer address
-            "" // customData
+            ""
         );
+        // "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20" // taker interaction to execute during the fill,
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
@@ -124,10 +125,15 @@ contract SwapExecutorTest is Test, Deployers {
             false, // If set, the order uses the Uniswap Permit 2.
             "", // If set, then first 20 bytes of args are treated as target address for maker’s funds transfer
             extension, // extension
-            takerInteractionData, // Taker’s interaction calldata coded in args argument length
-            // "", // interaction TODO fill this out with swap payload
+                // takerInteractionData, // Taker’s interaction calldata coded in args argument length
+                // "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20", // taker interaction to execute during the fill,
+            abi.encodePacked(
+                address(swapExecutor), hex"0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
+            ), // "", // interaction TODO fill this out with swap payload
             0.99 ether // threshold
         );
+        console2.log("takerTraits Below");
+        console2.logBytes(takerTraits.args);
 
         // Approve rebalancer contract to transfer tokens on behalf of taker
         vm.prank(takerAddr);

@@ -89,7 +89,8 @@ contract ChainLinkCalculatorTest is Test, Deployers {
             "", // permit
             "", // preInteraction
             "", // postInteraction
-            "" // customData
+            // "" // customData
+            "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20" // The calldata with order extension,
         );
         console2.logBytes(extension);
 
@@ -107,9 +108,12 @@ contract ChainLinkCalculatorTest is Test, Deployers {
             false, // usePermit2
             "", // target
             extension, // extension
-            "", // interaction
+            "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20", // The calldata with order extension,
+            // "", // interaction
             0.99 ether // threshold
         );
+        console2.log("takerTraits Below");
+        console2.logBytes(takerTraits.args);
 
         // Record initial balances
         uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);

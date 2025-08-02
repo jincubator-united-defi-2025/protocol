@@ -57,6 +57,8 @@ contract SwapExecutor is ITakerInteraction {
         bytes calldata extraData
     ) external override {
         console2.log("SwapExecutor: takerInteraction");
+        console2.log("extraData Below");
+        console2.logBytes(extraData);
         // console2.logbytes32("SwapExecutor: orderHash", orderHash);
         // console2.logbytes32(orderHash);
         console2.log("SwapExecutor: taker", taker);

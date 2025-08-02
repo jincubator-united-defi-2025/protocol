@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.23;
 
+import {Test, console2} from "forge-std/Test.sol";
 import "@jincubator/limit-order-protocol/contracts/interfaces/IOrderMixin.sol";
 import "@jincubator/limit-order-protocol/contracts/interfaces/IPostInteraction.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -49,6 +50,8 @@ contract RebalancerInteraction is IPostInteraction {
         uint256 remainingMakingAmount,
         bytes calldata extraData
     ) external override {
+        console2.log("extraData Below");
+        console2.logBytes(extraData);
         // Transfer the taker's output tokens (maker asset) to the treasurer
         address outputToken = address(uint160(Address.unwrap(order.makerAsset)));
         uint256 outputAmount = makingAmount;
