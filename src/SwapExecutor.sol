@@ -72,8 +72,8 @@ contract SwapExecutor is ITakerInteraction {
 
         // TODO: Implement the swap logic here using tycho router
         // Use SafeERC20 for safe token transfers
-        IERC20(inputToken).safeTransferFrom(maker, taker, outputAmount);
-        IERC20(inputToken).safeTransferFrom(maker, taker, outputAmount);
+        // IERC20(inputToken).safeTransferFrom(maker, taker, outputAmount);
+        // IERC20(inputToken).safeTransferFrom(maker, taker, outputAmount);
 
         emit TokensSwapExecuted(maker, inputToken, inputAmount, taker, outputToken, outputAmount, executor);
         // return takingAmount; //TODO Update this after executing the swap
