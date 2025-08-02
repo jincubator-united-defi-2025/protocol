@@ -61,7 +61,7 @@ A decentralized solver which works with 1inch Fusion+
     - ERC-6909 extension similar to [ERC1155PROXY.sol](https://github.com/1inch/limit-order-protocol/blob/master/contracts/extensions/ERC1155Proxy.sol)
       - Resource Locking Functionality integrating with [the-compact](https://github.com/uniswap/the-compact)
     - Price Discovery
-      - [ChainCalculator.sol](https://github.com/1inch/limit-order-protocol/blob/master/contracts/extensions/ChainlinkCalculator.sol): Reference Implementation see Price Discovery codebases below.
+      - [ChainCalculator.sol](https://github.com/1inch/limit-order-protocol/blob/master/contracts/extensions/chainLinkCalculator.sol): Reference Implementation see Price Discovery codebases below.
     - [Interactions](https://github.com/1inch/limit-order-protocol/blob/master/description.md#interactions): Interactions are callbacks that enable the execution of arbitrary code, which is provided by the maker’s order or taker’s fill execution.
       - ERC-6909 Settlement (including EIP-712 Signature Verification)
       - BackRunning Of Order
@@ -119,7 +119,7 @@ We introduce a shim for LimitOrderProtocol in test/helpers
 
 Price Discovery
 
-- [ChainLinkCalculator](https://github.com/1inch/limit-order-protocol/blob/master/contracts/extensions/ChainlinkCalculator.sol)
+- [chainLinkCalculator ](https://github.com/1inch/limit-order-protocol/blob/master/contracts/extensions/chainLinkCalculator.sol)
 - [Tycho Simulation TokenProxy](https://github.com/propeller-heads/tycho-simulation/blob/main/token-proxy/src/TokenProxy.sol)
 - [SkySwap Oracle Manager](https://github.com/SkyYap/SkySwap/blob/main/src/OracleManager.sol)
 - [Yolo Protocol Oracle](https://github.com/YOLO-Protocol/yolo-core-v0/tree/main/src/oracles)

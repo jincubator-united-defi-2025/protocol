@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {ChainlinkCalculator} from "src/ChainlinkCalculator.sol";
+import {ChainLinkCalculator} from "src/ChainLinkCalculator.sol";
 import {MockERC20} from "solmate/src/test/utils/mocks/MockERC20.sol";
 import {ERC20} from "the-compact/lib/solady/src/tokens/ERC20.sol";
 import {WETH} from "the-compact/lib/solady/src/tokens/WETH.sol";
@@ -12,25 +12,27 @@ import {IPermit2} from "permit2/src/interfaces/IPermit2.sol";
 import {ILimitOrderProtocol} from "src/interfaces/1inch/ILimitOrderProtocol.sol";
 import {Permit2Deployer} from "test/helpers/Permit2.sol";
 import {LimitOrderProtocolDeployer} from "test/helpers/LimitOrderProtocolManager.sol";
-import {ChainlinkCalculator} from "src/ChainlinkCalculator.sol";
 import {AggregatorMock} from "src/mocks/1inch/AggregatorMock.sol";
+import {RebalancerInteraction} from "src/RebalancerInteraction.sol";
+import {SwapExecutor} from "src/SwapExecutor.sol";
 
 contract Deployers is Test {
     // Helpful Test Constants
     address constant ZERO_ADDRESS = address(0);
 
     // Global Variables
+    uint256 public chainId = 1;
     IPermit2 permit2;
-    ChainlinkCalculator public chainLinkCalculator;
     MockERC20 public dai;
-    WETH public weth;
     MockERC20 public inch;
     MockERC20 public usdc;
-    ILimitOrderProtocol public swap;
-    ChainlinkCalculator public chainlinkCalculator;
+    WETH public weth;
     AggregatorMock public daiOracle;
     AggregatorMock public inchOracle;
-    uint256 public chainId = 1;
+    ILimitOrderProtocol public swap;
+    chainLinkCalculator public chainLinkCalculator;
+    RebalancerInteraction public rebalancerInteraction;
+    SwapExecutor public swapExecutor;
 
     // Test users - global variables
     address public makerAddr;
@@ -104,14 +106,13 @@ contract Deployers is Test {
 
     function deployArtifacts() internal {
         deployPermit2();
-        chainLinkCalculator = new ChainlinkCalculator();
         deploySwapTokens();
-        // swap = new LimitOrderProtocol(IWETH(address(weth)));
-        chainlinkCalculator = new ChainlinkCalculator();
         daiOracle = new AggregatorMock(1000000000000000000);
         inchOracle = new AggregatorMock(1000000000000000000);
-
         deployLimitOrderProtocol(address(weth));
+        chainLinkCalculator = new chainLinkCalculator();
+        RebalancerInteraction = new RebalancerInteraction();
+        swapExecutor = new swapExecutor();
         setupUsers();
     }
 }

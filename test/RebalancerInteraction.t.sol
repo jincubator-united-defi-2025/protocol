@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {ChainlinkCalculator} from "src/ChainlinkCalculator.sol";
+import {ChainLinkCalculator} from "src/ChainLinkCalculator.sol";
 import {RebalancerInteraction} from "src/RebalancerInteraction.sol";
 import {Deployers} from "test/utils/Deployers.sol";
 import {OrderUtils} from "test/utils/OrderUtils.sol";
@@ -70,7 +70,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         // DAI oracle: 1 ETH = 4000 DAI (0.00025 ETH per DAI)
         daiOracle = new AggregatorMock(0.00025 ether);
 
-        address chainlinkCalcAddress = address(chainlinkCalculator);
+        address chainlinkCalcAddress = address(chainLinkCalculator);
         address oracleAddress = address(daiOracle);
 
         // Build order with chainlink price data
@@ -116,7 +116,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -165,7 +165,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
 
-        address chainlinkCalcAddress = address(chainlinkCalculator);
+        address chainlinkCalcAddress = address(chainLinkCalculator);
         address oracleAddress = address(daiOracle);
 
         // Build order with chainlink price data
@@ -211,7 +211,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits with makingAmount flag
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -260,7 +260,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         daiOracle = new AggregatorMock(0.00025 ether); // 1 ETH = 4000 DAI
         inchOracle = new AggregatorMock(1577615249227853); // 1 INCH = 0.0001577615249227853 ETH
 
-        address chainlinkCalcAddress = address(chainlinkCalculator);
+        address chainlinkCalcAddress = address(chainLinkCalculator);
         address oracleAddress1 = address(inchOracle);
         address oracleAddress2 = address(daiOracle);
 
@@ -314,7 +314,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits with makingAmount flag
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -367,7 +367,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         daiOracle = new AggregatorMock(0.00025 ether); // 1 ETH = 4000 DAI
         inchOracle = new AggregatorMock(1577615249227853); // 1 INCH = 0.0001577615249227853 ETH
 
-        address chainlinkCalcAddress = address(chainlinkCalculator);
+        address chainlinkCalcAddress = address(chainLinkCalculator);
         address oracleAddress1 = address(inchOracle);
         address oracleAddress2 = address(daiOracle);
 
@@ -421,7 +421,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -479,13 +479,13 @@ contract RebalancerInteractionTest is Test, Deployers {
 
         // Build price call for predicate
         bytes memory priceCall =
-            abi.encodeWithSelector(chainlinkCalculator.doublePrice.selector, inchOracle, daiOracle, int256(0), 1 ether);
+            abi.encodeWithSelector(chainLinkCalculator.doublePrice.selector, inchOracle, daiOracle, int256(0), 1 ether);
 
         // Build predicate call
         bytes memory predicate = abi.encodeWithSelector(
             swap.lt.selector,
             6.32 ether,
-            abi.encodeWithSelector(swap.arbitraryStaticCall.selector, address(chainlinkCalculator), priceCall)
+            abi.encodeWithSelector(swap.arbitraryStaticCall.selector, address(chainLinkCalculator), priceCall)
         );
 
         // Build order with predicate
@@ -517,7 +517,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits with makingAmount flag
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -571,7 +571,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
         // Build price call for predicate (invalid threshold)
         bytes memory priceCall =
-            abi.encodeWithSelector(chainlinkCalculator.doublePrice.selector, inchOracle, daiOracle, int256(0), 1 ether);
+            abi.encodeWithSelector(chainLinkCalculator.doublePrice.selector, inchOracle, daiOracle, int256(0), 1 ether);
 
         // Build predicate call with invalid threshold
         bytes memory predicate = abi.encodeWithSelector(
@@ -609,7 +609,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits with makingAmount flag
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -684,7 +684,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits with makingAmount flag
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -757,7 +757,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits without extension
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -825,7 +825,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits without extension
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -906,7 +906,7 @@ contract RebalancerInteractionTest is Test, Deployers {
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(orderData);
+        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
@@ -943,8 +943,8 @@ contract RebalancerInteractionTest is Test, Deployers {
     }
 
     // Helper function to sign order and create vs
-    function signOrder(bytes32 orderData) internal view returns (bytes32 r, bytes32 vs) {
-        (uint8 v, bytes32 r_, bytes32 s) = vm.sign(makerPK, orderData);
+    function signOrder(uint256 privateKey, bytes32 orderData) internal view returns (bytes32 r, bytes32 vs) {
+        (uint8 v, bytes32 r_, bytes32 s) = vm.sign(privateKey, orderData);
         r = r_;
         // yParityAndS format: s | (v << 255)
         // v should be 27 or 28, we need to convert to 0 or 1 for yParity

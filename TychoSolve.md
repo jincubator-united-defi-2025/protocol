@@ -21,7 +21,7 @@
 
 ## Implementation Approach
 
-    1. TychoFillPredicate.sol (Predicate): copied from ChainLinkCalculator.sol
+    1. TychoFillPredicate.sol (Predicate): copied from chainLinkCalculator.sol
     2. TychoFillInteraction.sol : copied from RebalancerInteraction.sol
     3. TychoResolver.sol: Copied from ResolverCrossChain.sol and Dispatcher.sol
     4. Tests copied from RebalancerInteraction.t.sol and enhanced with
@@ -33,20 +33,64 @@
 
 ## Flow
 
-- Resolver Contract executes calls to Tycho Dispatchr or Router
-- Need to pass SolverPayload and Resolver Address when calling fill
-  - uses `buildTakerTraits`
-    ```solidity
-        function buildTakerTraits(
-        bool makingAmount,
-        bool unwrapWeth,
-        bool skipMakerPermitFlag,
-        bool usePermit2,
-        bytes memory target, //This is the address of the Resolver
-        bytes memory extension,
-        bytes memory interaction, //This is where the solverPayload goes to execute the swap
-        uint256 threshold
-    ```
+### Interactions
+
+Interactions are callbacks that enable the execution of arbitrary code, which is provided by the maker’s order or taker’s fill execution.
+
+The order execution logic includes several steps that also involve interaction calls:
+
+1. Validate the order
+2. **Call the maker's pre-interaction**
+3. Transfer the maker's asset to the taker
+4. **Call the taker's interaction**
+5. Transfer the taker's asset to the maker
+6. **Call the maker's post-interaction**
+7. Emit the OrderFilled event
+
+Calls are executed in the context of the limit order protocol. The target contract should implement the `IPreInteraction` or `IPostInteraction` interfaces for the maker's pre- and post-interactions and the `ITakerInteraction` interface for the taker's interaction. These interfaces declare the single callback function for maker and taker interactions, respectively.
+
+Here is how the maker’s pre- & post- interactions and the taker’s interaction are defined in the interfaces:
+
+```solidity
+//Maker's pre-interaction
+function preInteraction(
+        IOrderMixin.Order calldata order,
+        bytes32 orderHash,
+        address taker,
+        uint256 makingAmount,
+        uint256 takingAmount,
+        uint256 remainingMakingAmount,
+        bytes calldata extraData
+    ) external;
+
+//Maker's post-interaction
+function postInteraction(
+        IOrderMixin.Order calldata order,
+        bytes32 orderHash,
+        address taker,
+        uint256 makingAmount,
+        uint256 takingAmount,
+        uint256 remainingMakingAmount,
+        bytes calldata extraData
+    ) external;
+
+//Taker's interaction
+function takerInteraction(
+        IOrderMixin.Order calldata order,
+        bytes32 orderHash,
+        address taker,
+        uint256 makingAmount,
+        uint256 takingAmount,
+        uint256 remainingMakingAmount,
+        bytes calldata extraData
+    ) external returns(uint256 offeredTakingAmount);
+```
+
+- Resolver Contract executes calls to Tycho Dispatcher or Router
+- Three functions
+  - preInteraction: used in chainLinkCalculator (to ensure price before swap)
+  - takerInteraction used in SwapExecutor to Execute Swap by Taker
+  - postInteraction used in Rebalancer to Send Funds to Treasury
 
 ### Design Questions
 
@@ -57,7 +101,7 @@
 
 2. **Predicate Logic**:
 
-   - What predicate logic will TychoFill.sol use? Will it be similar to ChainLinkCalculator.sol with price comparisons?
+   - What predicate logic will TychoFill.sol use? Will it be similar to chainLinkCalculator.sol with price comparisons?
    - How will the predicate determine when a solve is profitable vs. when it should execute?
 
 3. **Solver Payload Structure**:
@@ -82,7 +126,7 @@
 
 7. **Oracle Integration**:
 
-   - Will TychoFill use the same Chainlink oracle approach as ChainLinkCalculator?
+   - Will TychoFill use the same Chainlink oracle approach as chainLinkCalculator ?
    - How will price feeds be validated and updated?
 
 8. **Cross-Chain Considerations**:
@@ -93,7 +137,7 @@
 
 1. **Phase 1: Core Contract Development**
 
-   - Create `TychoFill.sol` based on `ChainLinkCalculator.sol`
+   - Create `TychoFill.sol` based on `chainLinkCalculator.sol`
 
      - Implement predicate logic for profitable solve detection
      - Add Tycho-specific price calculation methods

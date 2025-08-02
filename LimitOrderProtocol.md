@@ -1,12 +1,12 @@
-# ChainLinkCalculator Extension for Limit Order Protocol
+# chainLinkCalculator Extension for Limit Order Protocol
 
 ## Overview
 
-The ChainLinkCalculator extension is a powerful addition to the 1inch Limit Order Protocol that enables dynamic pricing based on Chainlink oracle data. This extension allows orders to be filled at prices that are calculated on-chain using real-time oracle feeds, making it possible to create orders that automatically adjust to market conditions.
+The chainLinkCalculator extension is a powerful addition to the 1inch Limit Order Protocol that enables dynamic pricing based on Chainlink oracle data. This extension allows orders to be filled at prices that are calculated on-chain using real-time oracle feeds, making it possible to create orders that automatically adjust to market conditions.
 
-## 1. What the ChainLinkCalculatorExtension Does
+## 1. What the chainLinkCalculator Extension Does
 
-The ChainLinkCalculator extension serves as an `IAmountGetter` implementation that:
+The chainLinkCalculator extension serves as an `IAmountGetter` implementation that:
 
 - **Calculates dynamic exchange rates** using Chainlink oracle data
 - **Supports both single and double oracle pricing** for different token pairs
@@ -277,7 +277,7 @@ bytes memory takingAmountData = abi.encodePacked(
 ```solidity
 // Build price call for predicate
 bytes memory priceCall = abi.encodeWithSelector(
-    chainlinkCalculator.doublePrice.selector,
+    chainLinkCalculator .doublePrice.selector,
     inchOracle,    // INCH/ETH oracle
     daiOracle,     // DAI/ETH oracle
     int256(0),     // No decimals adjustment
@@ -290,7 +290,7 @@ bytes memory predicate = abi.encodeWithSelector(
     6.32 ether,             // Threshold: 6.32
     abi.encodeWithSelector(
         swap.arbitraryStaticCall.selector,
-        address(chainlinkCalculator),
+        address(chainLinkCalculator ),
         priceCall
     )
 );
@@ -300,7 +300,7 @@ bytes memory predicate = abi.encodeWithSelector(
 
 1. Order fill is attempted
 2. Protocol evaluates predicate before execution
-3. Predicate calls `chainlinkCalculator.doublePrice()` with oracle data
+3. Predicate calls `chainLinkCalculator .doublePrice()` with oracle data
 4. Calculated INCH/DAI price is compared to 6.32 threshold
 5. If price < 6.32: order executes normally
 6. If price ≥ 6.32: order reverts with predicate failure
