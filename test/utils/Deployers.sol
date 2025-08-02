@@ -18,6 +18,9 @@ import {OracleCalculator} from "src/OracleCalculator.sol";
 import {RebalancerInteraction} from "src/RebalancerInteraction.sol";
 import {TychoSwapExecutor} from "src/TychoSwapExecutor.sol";
 import {TychoRouterTestSetup} from "test/tycho/TychoRouterTestSetup.sol";
+import {Compact} from "src/Compact.sol";
+import {CompactInteraction} from "src/CompactInteraction.sol";
+import {ResourceManager} from "src/ResourceManager.sol";
 
 contract Deployers is Test, TychoRouterTestSetup {
     // Helpful Test Constants
@@ -37,6 +40,9 @@ contract Deployers is Test, TychoRouterTestSetup {
     OracleCalculator public oracleCalculator;
     RebalancerInteraction public rebalancerInteraction;
     TychoSwapExecutor public tychoSwapExecutor;
+    Compact public compact;
+    CompactInteraction public compactInteraction;
+    ResourceManager public resourceManager;
 
     // Test users - global variables
     address public makerAddr;
@@ -45,8 +51,12 @@ contract Deployers is Test, TychoRouterTestSetup {
     uint256 public takerPK;
     address public treasurerAddr; //TODO: Create a Treasurer contract
     uint256 public treasurerPK;
+    address public treasurer;
+    address public mockTheCompact;
 
     function setupUsers() internal {
+        treasurer = makeAddr("treasurer");
+        mockTheCompact = makeAddr("theCompact");
         (makerAddr, makerPK) = makeAddrAndKey("makerAddr");
         (takerAddr, takerPK) = makeAddrAndKey("takerAddr");
         (treasurerAddr, treasurerPK) = makeAddrAndKey("treasurerAddr");
@@ -118,10 +128,12 @@ contract Deployers is Test, TychoRouterTestSetup {
         daiOracle = new AggregatorMock(1000000000000000000);
         inchOracle = new AggregatorMock(1000000000000000000);
         deployLimitOrderProtocol(address(weth));
-        dispatcher = new Dispatcher();
         oracleCalculator = new OracleCalculator();
         tychoSwapExecutor = new TychoSwapExecutor(address(dispatcher), payable(tychoRouter));
         setupUsers();
         rebalancerInteraction = new RebalancerInteraction(address(treasurerAddr));
+        resourceManager = new ResourceManager(mockTheCompact, address(this));
+        compact = new Compact(address(resourceManager));
+        compactInteraction = new CompactInteraction(treasurer, address(resourceManager), mockTheCompact);
     }
 }
