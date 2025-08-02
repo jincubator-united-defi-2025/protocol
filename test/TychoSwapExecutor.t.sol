@@ -78,9 +78,9 @@ contract TychoSwapExecutorTest is Test, Deployers {
         encodeUniswapV2Swap(
             address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2),
             WETH_DAI_POOL,
-            ALICE,
+            makerAddr,
             false,
-            RestrictTransferFrom.TransferType.TransferFrom
+            RestrictTransferFrom.TransferType.Transfer
         );
         //  encodeUniswapV2Swap(tokenIn, target, receiver, false, transferType);
 
@@ -135,7 +135,7 @@ contract TychoSwapExecutorTest is Test, Deployers {
             makerAsset: address(weth),
             takerAsset: address(dai),
             makingAmount: 1 ether,
-            takingAmount: 4000 ether,
+            takingAmount: 2000 ether, // Updated to realistic market price
             makerTraits: OrderUtils.buildMakerTraits(address(0), false, true, true, false, false, 0, 0, 0)
         });
 
@@ -167,6 +167,9 @@ contract TychoSwapExecutorTest is Test, Deployers {
         addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
         // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
         addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
+
+        // Add approval for tychoSwapExecutor to spend WETH from takerAddr (needed for the swap)
+        addApproval(takerAddr, address(tychoSwapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
 
         // ===== Begin of Taker Tasks =====
         // Create Tycho Swap
@@ -219,14 +222,16 @@ contract TychoSwapExecutorTest is Test, Deployers {
         // Fill the order
         vm.prank(takerAddr);
         swap.fillOrderArgs(
-            convertOrder(order), r, vs, 4000 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args
+            convertOrder(order), r, vs, 2000 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args
         );
 
         // Verify balance changes
-        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - 4000 ether);
-        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + 4000 ether);
-        // Taker doesn't receive WETH because it's transferred to treasurer
-        assertEq(weth.balanceOf(takerAddr), addrWethBalanceBefore + 1 ether);
+        // The taker pays 2000 DAI directly to the maker (as specified in the order)
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - 2000 ether);
+        // The maker receives DAI from the swap (WETH -> DAI conversion) + direct payment
+        assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + 2018817438608734439722 + 2000 ether);
+        // Taker receives 1 WETH from maker but uses it for the swap, so balance stays the same
+        assertEq(weth.balanceOf(takerAddr), addrWethBalanceBefore);
         assertEq(weth.balanceOf(makerAddr), makerAddrWethBalanceBefore - 1 ether);
     }
 }

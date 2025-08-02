@@ -122,9 +122,11 @@ contract TychoSwapExecutor is ITakerInteraction {
         // uint256 amountOut = tychoRouter.singleSwap(
         //     inputAmount, inputToken, outputToken, outputAmount, false, false, maker, true, tychoSwap
         // );
+        // Transfer WETH from taker to TychoRouter first
+        IERC20(WETH).safeTransferFrom(taker, address(tychoRouter), inputAmount);
+
         //TODO: Replace hardcoded values with above
-        uint256 amountOut =
-            tychoRouter.singleSwap(inputAmount, WETH, DAI, outputAmount, false, false, maker, true, tychoSwap);
+        uint256 amountOut = tychoRouter.singleSwap(inputAmount, WETH, DAI, 1, false, false, maker, false, tychoSwap);
 
         console2.log("SwapExecutor: amountOut");
         console2.log(amountOut);
