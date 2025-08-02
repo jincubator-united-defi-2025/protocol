@@ -19,13 +19,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract TychoSwapExecutorTest is Test, Deployers {
     using OrderUtils for *;
 
-    // address public treasurerAddr; // Treasurer address
-
-    function setUp() public {
-        // Deploy contracts
-        deployArtifacts();
-    }
-
     function buildPostInteractionCalldata(address interactionAddress) internal pure returns (bytes memory) {
         return abi.encodePacked(interactionAddress);
     }

@@ -109,7 +109,7 @@ contract Deployers is Test {
         vm.label(address(swap), "LimitOrderProtocol");
     }
 
-    function deployArtifacts() internal {
+    function setUp() public {
         deployPermit2();
         deploySwapTokens();
         daiOracle = new AggregatorMock(1000000000000000000);

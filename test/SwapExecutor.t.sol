@@ -19,13 +19,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract SwapExecutorTest is Test, Deployers {
     using OrderUtils for *;
 
-    // address public treasurerAddr; // Treasurer address
-
-    function setUp() public {
-        // Deploy contracts
-        deployArtifacts();
-    }
-
     function buildSinglePriceCalldata(address chainlinkCalcAddress, address oracleAddress, uint256 spread, bool inverse)
         internal
         pure

@@ -18,11 +18,6 @@ import {TakerTraits} from "@jincubator/limit-order-protocol/contracts/libraries/
 contract ChainLinkCalculatorTest is Test, Deployers {
     using OrderUtils for *;
 
-    function setUp() public {
-        // Deploy contracts
-        deployArtifacts();
-    }
-
     function buildSinglePriceCalldata(address chainlinkCalcAddress, address oracleAddress, uint256 spread, bool inverse)
         internal
         pure
