@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
-import "./utils/OrderUtils.sol";
-import "../src/OrderUtilsExample.sol";
+import "test/utils/orderUtils/OrderUtils.sol";
+import "test/utils/orderUtils/OrderUtilsExample.sol";
 
 contract OrderUtilsTest is Test {
     using OrderUtils for *;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../test/utils/OrderUtils.sol";
+import "test/utils/orderUtils/OrderUtils.sol";
 
 /**
  * @title OrderUtilsExample
