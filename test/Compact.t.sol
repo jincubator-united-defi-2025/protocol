@@ -196,7 +196,7 @@ contract CompactTest is Test, Deployers {
             "", // predicate
             "", // permit
             "", // preInteraction
-            abi.encodePacked(address(compact)), // postInteraction
+            abi.encodePacked(address(compactInteraction)), // postInteraction
             "" // customData
         );
 
@@ -205,6 +205,8 @@ contract CompactTest is Test, Deployers {
         weth.approve(address(swap), 1 ether);
         vm.prank(takerAddr);
         dai.approve(address(compact), 1000 ether);
+        vm.prank(takerAddr);
+        dai.approve(address(compactInteraction), 1000 ether);
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
@@ -252,7 +254,7 @@ contract CompactTest is Test, Deployers {
             "", // predicate
             "", // permit
             "", // preInteraction
-            abi.encodePacked(address(compact)), // postInteraction
+            abi.encodePacked(address(compactInteraction)), // postInteraction
             "" // customData
         );
 
@@ -401,7 +403,7 @@ contract CompactTest is Test, Deployers {
             "", // predicate
             "", // permit
             "", // preInteraction
-            abi.encodePacked(address(compact)), // postInteraction
+            abi.encodePacked(address(compactInteraction)), // postInteraction
             "" // customData
         );
 
@@ -409,7 +411,7 @@ contract CompactTest is Test, Deployers {
         vm.prank(takerAddr);
         weth.approve(address(swap), 0.5 ether);
         vm.prank(takerAddr);
-        dai.approve(address(compact), 500 ether);
+        dai.approve(address(compactInteraction), 500 ether);
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
