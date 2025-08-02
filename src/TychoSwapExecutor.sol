@@ -20,7 +20,7 @@ contract TychoSwapExecutor is ITakerInteraction {
 
     /// @notice Treasurer wallet address that receives the output tokens
     address public immutable executor;
-    address public immutable tychoRouterAddress;
+    address payable public immutable tychoRouterAddress;
     TychoRouter public immutable tychoRouter;
 
     /// @notice Emitted when tokens are transferred to treasurer
@@ -35,11 +35,11 @@ contract TychoSwapExecutor is ITakerInteraction {
     );
 
     /// @param _executor The address of the treasurer wallet
-    constructor(address _executor, address _tychoRouterAddress) {
+    constructor(address _executor, address payable _tychoRouterAddress) {
         if (_executor == address(0)) revert InvalidExecutor();
         executor = _executor;
         tychoRouterAddress = _tychoRouterAddress;
-        tychoRouter = TychoRouter(_tychoRouterAddress);
+        tychoRouter = TychoRouter(payable(_tychoRouterAddress));
     }
 
     /// @notice Taker's interaction callback that executes the swap
