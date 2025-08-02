@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.23;
 
+import {Test, console2} from "forge-std/Test.sol";
 import "@jincubator/limit-order-protocol/contracts/interfaces/IOrderMixin.sol";
 import "@jincubator/limit-order-protocol/contracts/interfaces/ITakerInteraction.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -55,6 +56,13 @@ contract SwapExecutor is ITakerInteraction {
         uint256 remainingMakingAmount,
         bytes calldata extraData
     ) external override {
+        console2.log("SwapExecutor: takerInteraction");
+        // console2.logbytes32("SwapExecutor: orderHash", orderHash);
+        // console2.logbytes32(orderHash);
+        console2.log("SwapExecutor: taker", taker);
+        console2.log("SwapExecutor: makingAmount", makingAmount);
+        console2.log("SwapExecutor: takingAmount", takingAmount);
+        console2.log("SwapExecutor: remainingMakingAmount", remainingMakingAmount);
         // Transfer the taker's output tokens (maker asset) to the treasurer
         address maker = address(uint160(Address.unwrap(order.maker)));
         address inputToken = address(uint160(Address.unwrap(order.makerAsset)));
