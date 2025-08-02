@@ -52,42 +52,52 @@ contract Deployers is Test, TychoRouterTestSetup {
         (takerAddr, takerPK) = makeAddrAndKey("takerAddr");
         (treasurerAddr, treasurerPK) = makeAddrAndKey("treasurerAddr");
         // Mint tokens to test addresses
-        dai.mint(takerAddr, 1_000_000 ether);
-        dai.mint(makerAddr, 1_000_000 ether);
-        inch.mint(takerAddr, 1_000_000 ether);
-        inch.mint(makerAddr, 1_000_000 ether);
+        daiMock.mint(takerAddr, 1_000_000 ether);
+        daiMock.mint(makerAddr, 1_000_000 ether);
+        inchMock.mint(takerAddr, 1_000_000 ether);
+        inchMock.mint(makerAddr, 1_000_000 ether);
+        DAI.mint(takerAddr, 1_000_000 ether);
+        DAI.mint(makerAddr, 1_000_000 ether);
+        WETH.mint(takerAddr, 1_000_000 ether);
+        WETH.mint(makerAddr, 1_000_000 ether);
 
         // Setup WETH deposits
         vm.deal(makerAddr, 100 ether);
         vm.deal(takerAddr, 100 ether);
         vm.prank(makerAddr);
-        weth.deposit{value: 100 ether}();
+        wethMock.deposit{value: 100 ether}();
         vm.prank(takerAddr);
-        weth.deposit{value: 100 ether}();
+        wethMock.deposit{value: 100 ether}();
+        vm.deal(makerAddr, 100 ether);
+        vm.deal(takerAddr, 100 ether);
+        vm.prank(makerAddr);
+        wethMock.deposit{value: 100 ether}();
+        vm.prank(takerAddr);
+        wethMock.deposit{value: 100 ether}();
 
         // Approve tokens for swap contract
         vm.prank(makerAddr);
-        dai.approve(address(swap), 1_000_000 ether);
+        daiMock.approve(address(swap), 1_000_000 ether);
         vm.prank(makerAddr);
-        weth.approve(address(swap), 1_000_000 ether);
+        wethMock.approve(address(swap), 1_000_000 ether);
         vm.prank(makerAddr);
-        inch.approve(address(swap), 1_000_000 ether);
+        inchMock.approve(address(swap), 1_000_000 ether);
 
         vm.prank(takerAddr);
-        dai.approve(address(swap), 1_000_000 ether);
+        daiMock.approve(address(swap), 1_000_000 ether);
         vm.prank(takerAddr);
-        weth.approve(address(swap), 1_000_000 ether);
+        wethMock.approve(address(swap), 1_000_000 ether);
         vm.prank(takerAddr);
-        inch.approve(address(swap), 1_000_000 ether);
+        inchMock.approve(address(swap), 1_000_000 ether);
     }
 
     function deploySwapTokens() internal {
-        dai = new MockERC20("Test Token", "TEST", 18);
-        dai.mint(address(this), 10_000_000 ether);
-        weth = new WETH();
-        inch = new MockERC20("1INCH", "1INCH", 18);
-        inch.mint(address(this), 10_000_000 ether);
-        usdc = new MockERC20("USDC", "USDC", 6);
+        daiMock = new MockERC20("Test Token", "TEST", 18);
+        daiMock.mint(address(this), 10_000_000 ether);
+        wethMock = new WETH();
+        inchMock = new MockERC20("1INCH", "1INCH", 18);
+        inchMock.mint(address(this), 10_000_000 ether);
+        usdcMock = new MockERC20("USDC", "USDC", 6);
         usdc.mint(address(this), 10_000_000 ether);
     }
 

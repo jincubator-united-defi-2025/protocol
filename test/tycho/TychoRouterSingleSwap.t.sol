@@ -47,6 +47,8 @@ contract TychoRouterSingleSwapTest is TychoRouterTestSetup {
             encodeUniswapV2Swap(WETH_ADDR, WETH_DAI_POOL, ALICE, false, RestrictTransferFrom.TransferType.TransferFrom);
 
         bytes memory swap = encodeSingleSwap(address(usv2Executor), protocolData);
+        console2.log("SwapExecutor: swap");
+        console2.logBytes(swap);
 
         uint256 minAmountOut = 2000 * 1e18;
         uint256 amountOut =

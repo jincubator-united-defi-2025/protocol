@@ -34,12 +34,30 @@ contract TychoSwapExecutor is ITakerInteraction {
         address indexed executor
     );
 
+    //TODO: remove debug enum
+    enum TransferType {
+        TransferFrom,
+        Transfer,
+        None
+    }
+
     /// @param _executor The address of the treasurer wallet
     constructor(address _executor, address payable _tychoRouterAddress) {
         if (_executor == address(0)) revert InvalidExecutor();
         executor = _executor;
         tychoRouterAddress = _tychoRouterAddress;
         tychoRouter = TychoRouter(payable(_tychoRouterAddress));
+    }
+
+    //TODO: remove debug function
+    function encodeUniswapV2Swap(
+        address tokenIn,
+        address target,
+        address receiver,
+        bool zero2one,
+        TransferType transferType
+    ) internal pure returns (bytes memory) {
+        return abi.encodePacked(tokenIn, target, receiver, zero2one, transferType);
     }
 
     /// @notice Taker's interaction callback that executes the swap
@@ -70,7 +88,7 @@ contract TychoSwapExecutor is ITakerInteraction {
         console2.log("TychoSwapExecutor: tychoExecutor");
         console2.log(tychoExecutor);
         // Get the remaining bytes as the swap data
-        bytes memory tychoSwap = extraData[20:];
+        bytes memory tychoSwap = extraData;
         console2.log("TychoSwapExecutor: tychoSwap");
         console2.logBytes(tychoSwap);
         // console2.logbytes32("SwapExecutor: orderHash", orderHash);
@@ -86,11 +104,28 @@ contract TychoSwapExecutor is ITakerInteraction {
         uint256 inputAmount = makingAmount;
         uint256 outputAmount = takingAmount;
 
+        // debug purposes only
+        address ALICE = address(0xcd09f75E2BF2A4d11F3AB23f1389FcC1621c0cc2);
+        address WETH_DAI_POOL = 0xA478c2975Ab1Ea89e8196811F51A7B7Ade33eB11;
+        address WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+        address DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+        bytes memory debugSwap = encodeUniswapV2Swap(WETH, WETH_DAI_POOL, ALICE, false, TransferType.TransferFrom);
+        console2.log("SwapExecutor: debugSwap");
+        console2.logBytes(debugSwap);
+        // uint256 amountOut = tychoRouter.singleSwap(
+        //     inputAmount, inputToken, outputToken, outputAmount, false, false, maker, true, debugSwap
+        // );
+
+        console2.log("SwapExecutor: amountOut");
         // TODO: Implement the swap logic here using tycho router
         console2.log("SwapExecutor: tychoSwap");
-        uint256 amountOut = tychoRouter.singleSwap(
-            inputAmount, inputToken, outputToken, outputAmount, false, false, maker, true, tychoSwap
-        );
+        // uint256 amountOut = tychoRouter.singleSwap(
+        //     inputAmount, inputToken, outputToken, outputAmount, false, false, maker, true, tychoSwap
+        // );
+        //TODO: Replace hardcoded values with above
+        uint256 amountOut =
+            tychoRouter.singleSwap(inputAmount, WETH, DAI, outputAmount, false, false, maker, true, tychoSwap);
+
         console2.log("SwapExecutor: amountOut");
         console2.log(amountOut);
         // Use SafeERC20 for safe token transfers

@@ -74,7 +74,15 @@ contract TychoSwapExecutorTest is Test, Deployers {
         RestrictTransferFrom.TransferType transferType
     ) internal returns (bytes memory tychoSwap) {
         bytes memory protocolData =
-            encodeUniswapV2Swap(WETH_ADDR, WETH_DAI_POOL, ALICE, false, RestrictTransferFrom.TransferType.TransferFrom);
+        // encodeUniswapV2Swap(WETH_ADDR, WETH_DAI_POOL, ALICE, false, RestrictTransferFrom.TransferType.TransferFrom);
+        encodeUniswapV2Swap(
+            address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2),
+            WETH_DAI_POOL,
+            ALICE,
+            false,
+            RestrictTransferFrom.TransferType.TransferFrom
+        );
+        //  encodeUniswapV2Swap(tokenIn, target, receiver, false, transferType);
 
         tychoSwap = encodeSingleSwap(address(usv2Executor), protocolData);
         return tychoSwap;
