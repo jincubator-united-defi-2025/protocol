@@ -19,7 +19,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract RebalancerInteractionTest is Test, Deployers {
     using OrderUtils for *;
 
-    address public addr3; // Treasurer address
+    // address public treasurerAddr; // Treasurer address
 
     function setUp() public {
         // Deploy contracts
@@ -131,7 +131,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
         uint256 addrWethBalanceBefore = weth.balanceOf(takerAddr);
         uint256 makerAddrWethBalanceBefore = weth.balanceOf(makerAddr);
-        uint256 addr3WethBalanceBefore = weth.balanceOf(addr3);
+        uint256 treasurerAddrWethBalanceBefore = weth.balanceOf(treasurerAddr);
 
         // Fill the order
         vm.prank(takerAddr);
@@ -147,7 +147,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         assertEq(weth.balanceOf(makerAddr), makerAddrWethBalanceBefore - 0.99 ether);
 
         // Verify treasurer received the output tokens
-        assertEq(weth.balanceOf(addr3), addr3WethBalanceBefore + 0.99 ether);
+        assertEq(weth.balanceOf(treasurerAddr), treasurerAddrWethBalanceBefore + 0.99 ether);
     }
 
     function test_dai_to_eth_chainlink_order_with_rebalancer() public {
@@ -225,7 +225,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
         uint256 addrWethBalanceBefore = weth.balanceOf(takerAddr);
         uint256 makerAddrWethBalanceBefore = weth.balanceOf(makerAddr);
-        uint256 addr3DaiBalanceBefore = dai.balanceOf(addr3);
+        uint256 treasurerAddrDaiBalanceBefore = dai.balanceOf(treasurerAddr);
 
         // Fill the order
         vm.prank(takerAddr);
@@ -241,7 +241,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         assertEq(weth.balanceOf(makerAddr), makerAddrWethBalanceBefore + 1.01 ether);
 
         // Verify treasurer received the output tokens (DAI)
-        assertEq(dai.balanceOf(addr3), addr3DaiBalanceBefore + 4000 ether);
+        assertEq(dai.balanceOf(treasurerAddr), treasurerAddrDaiBalanceBefore + 4000 ether);
     }
 
     function test_dai_to_1inch_chainlink_order_takingAmountData_with_rebalancer() public {
@@ -328,7 +328,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
         uint256 addrInchBalanceBefore = inch.balanceOf(takerAddr);
         uint256 makerAddrInchBalanceBefore = inch.balanceOf(makerAddr);
-        uint256 addr3InchBalanceBefore = inch.balanceOf(addr3);
+        uint256 treasurerAddrInchBalanceBefore = inch.balanceOf(treasurerAddr);
 
         // Fill the order
         vm.prank(takerAddr);
@@ -348,7 +348,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         assertEq(inch.balanceOf(makerAddr), makerAddrInchBalanceBefore - makingAmount);
 
         // Verify treasurer received the output tokens (INCH)
-        assertEq(inch.balanceOf(addr3), addr3InchBalanceBefore + makingAmount);
+        assertEq(inch.balanceOf(treasurerAddr), treasurerAddrInchBalanceBefore + makingAmount);
     }
 
     function test_dai_to_1inch_chainlink_order_makingAmountData_with_rebalancer() public {
@@ -435,7 +435,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
         uint256 addrInchBalanceBefore = inch.balanceOf(takerAddr);
         uint256 makerAddrInchBalanceBefore = inch.balanceOf(makerAddr);
-        uint256 addr3InchBalanceBefore = inch.balanceOf(addr3);
+        uint256 treasurerAddrInchBalanceBefore = inch.balanceOf(treasurerAddr);
 
         // Fill the order
         vm.prank(takerAddr);
@@ -455,7 +455,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         assertEq(inch.balanceOf(makerAddr), makerAddrInchBalanceBefore - realMakingAmount);
 
         // Verify treasurer received the output tokens (INCH)
-        assertEq(inch.balanceOf(addr3), addr3InchBalanceBefore + realMakingAmount);
+        assertEq(inch.balanceOf(treasurerAddr), treasurerAddrInchBalanceBefore + realMakingAmount);
     }
 
     function test_dai_to_1inch_stop_loss_order_with_rebalancer() public {
@@ -531,7 +531,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
         uint256 addrInchBalanceBefore = inch.balanceOf(takerAddr);
         uint256 makerAddrInchBalanceBefore = inch.balanceOf(makerAddr);
-        uint256 addr3InchBalanceBefore = inch.balanceOf(addr3);
+        uint256 treasurerAddrInchBalanceBefore = inch.balanceOf(treasurerAddr);
 
         // Fill the order
         vm.prank(takerAddr);
@@ -547,7 +547,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         assertEq(inch.balanceOf(makerAddr), makerAddrInchBalanceBefore - makingAmount);
 
         // Verify treasurer received the output tokens (INCH)
-        assertEq(inch.balanceOf(addr3), addr3InchBalanceBefore + makingAmount);
+        assertEq(inch.balanceOf(treasurerAddr), treasurerAddrInchBalanceBefore + makingAmount);
     }
 
     function test_dai_to_1inch_stop_loss_order_predicate_invalid_with_rebalancer() public {
@@ -699,7 +699,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
         uint256 addrWethBalanceBefore = weth.balanceOf(takerAddr);
         uint256 makerAddrWethBalanceBefore = weth.balanceOf(makerAddr);
-        uint256 addr3WethBalanceBefore = weth.balanceOf(addr3);
+        uint256 treasurerAddrWethBalanceBefore = weth.balanceOf(treasurerAddr);
 
         // Fill the order
         vm.prank(takerAddr);
@@ -715,7 +715,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         assertEq(weth.balanceOf(makerAddr), makerAddrWethBalanceBefore - makingAmount);
 
         // Verify treasurer received the output tokens (WETH)
-        assertEq(weth.balanceOf(addr3), addr3WethBalanceBefore + makingAmount);
+        assertEq(weth.balanceOf(treasurerAddr), treasurerAddrWethBalanceBefore + makingAmount);
     }
 
     function test_simple_order_without_extension_with_rebalancer() public {
@@ -767,7 +767,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         addApprovalsForTaker(takerAddr, address(weth), 1 ether);
 
         // Record initial balances
-        uint256 addr3WethBalanceBefore = weth.balanceOf(addr3);
+        uint256 treasurerAddrWethBalanceBefore = weth.balanceOf(treasurerAddr);
 
         // Fill the order
         vm.prank(takerAddr);
@@ -783,7 +783,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         assertEq(weth.balanceOf(makerAddr), 99000000000000000000, "makerAddr WETH balance");
 
         // Verify treasurer received the output tokens (WETH)
-        assertEq(weth.balanceOf(addr3), addr3WethBalanceBefore + 1 ether);
+        assertEq(weth.balanceOf(treasurerAddr), treasurerAddrWethBalanceBefore + 1 ether);
     }
 
     function test_simple_order_with_different_amounts_with_rebalancer() public {
@@ -835,7 +835,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         addApprovalsForTaker(takerAddr, address(weth), 0.5 ether);
 
         // Record initial balances
-        uint256 addr3WethBalanceBefore = weth.balanceOf(addr3);
+        uint256 treasurerAddrWethBalanceBefore = weth.balanceOf(treasurerAddr);
 
         // Fill the order
         vm.prank(takerAddr);
@@ -851,7 +851,7 @@ contract RebalancerInteractionTest is Test, Deployers {
         assertEq(weth.balanceOf(makerAddr), 99500000000000000000, "makerAddr WETH balance");
 
         // Verify treasurer received the output tokens (WETH)
-        assertEq(weth.balanceOf(addr3), addr3WethBalanceBefore + 0.5 ether);
+        assertEq(weth.balanceOf(treasurerAddr), treasurerAddrWethBalanceBefore + 0.5 ether);
     }
 
     function test_rebalancer_transfer_failure() public {
