@@ -79,9 +79,12 @@ contract TychoSwapExecutor is ITakerInteraction {
         uint256 outputAmount = takingAmount;
 
         // TODO: Implement the swap logic here using tycho router
+        console2.log("SwapExecutor: tychoSwap");
         uint256 amountOut = tychoRouter.singleSwap(
             inputAmount, inputToken, outputToken, outputAmount, false, false, maker, true, tychoSwap
         );
+        console2.log("SwapExecutor: amountOut");
+        console2.log(amountOut);
         // Use SafeERC20 for safe token transfers
         // IERC20(inputToken).safeTransferFrom(maker, taker, makingAmount);
         // IERC20(outputToken).safeTransferFrom(taker, maker, outputAmount); //TODO replace this with the swap logic

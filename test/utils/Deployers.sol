@@ -16,6 +16,7 @@ import {Dispatcher} from "src/Dispatcher.sol";
 import {ChainLinkCalculator} from "src/ChainLinkCalculator.sol";
 import {RebalancerInteraction} from "src/RebalancerInteraction.sol";
 import {SwapExecutor} from "src/SwapExecutor.sol";
+import {TychoSwapExecutor} from "src/TychoSwapExecutor.sol";
 import {TychoRouterTestSetup} from "test/tycho/TychoRouterTestSetup.sol";
 
 contract Deployers is Test, TychoRouterTestSetup {
@@ -36,6 +37,7 @@ contract Deployers is Test, TychoRouterTestSetup {
     ChainLinkCalculator public chainLinkCalculator;
     RebalancerInteraction public rebalancerInteraction;
     SwapExecutor public swapExecutor;
+    TychoSwapExecutor public tychoSwapExecutor;
 
     // Test users - global variables
     address public makerAddr;
@@ -120,6 +122,7 @@ contract Deployers is Test, TychoRouterTestSetup {
         dispatcher = new Dispatcher();
         chainLinkCalculator = new ChainLinkCalculator();
         swapExecutor = new SwapExecutor(address(dispatcher));
+        tychoSwapExecutor = new TychoSwapExecutor(address(dispatcher), payable(tychoRouter));
         setupUsers();
         rebalancerInteraction = new RebalancerInteraction(address(treasurerAddr));
     }

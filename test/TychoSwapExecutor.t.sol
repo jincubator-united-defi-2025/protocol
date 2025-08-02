@@ -103,7 +103,7 @@ contract TychoSwapExecutorTest is Test, Deployers {
         vm.stopPrank();
     }
 
-    function test_eth_to_dai_chainlink_order_with_rebalancer_and_swapExecutor() public {
+    function test_eth_to_dai_chainlink_order_with_tychoSwapExecutor() public {
         // Advance block timestamp to ensure oracle data is considered fresh
         vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
@@ -172,7 +172,7 @@ contract TychoSwapExecutorTest is Test, Deployers {
             // Taker’s interaction calldata coded in args argument length: TODO fill this out with swap payload
             abi.encodePacked(
                 // address(swapExecutor), hex"0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
-                address(swapExecutor),
+                address(tychoSwapExecutor),
                 tychoSwap
             ), // interaction with TychoSwapExecutor TODO fill this out with swap payload
             0.99 ether // threshold
