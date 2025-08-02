@@ -7,6 +7,7 @@ import "@jincubator/limit-order-protocol/contracts/interfaces/IOrderMixin.sol";
 import "@jincubator/limit-order-protocol/contracts/interfaces/ITakerInteraction.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {TychoRouter} from "@jincubator/tycho-execution/foundry/src/TychoRouter.sol";
 
 /// @title Swap Executor
 /// @notice Taker interaction contract that executes the swap
@@ -19,6 +20,8 @@ contract TychoSwapExecutor is ITakerInteraction {
 
     /// @notice Treasurer wallet address that receives the output tokens
     address public immutable executor;
+    address public immutable tychoRouterAddress;
+    TychoRouter public immutable tychoRouter;
 
     /// @notice Emitted when tokens are transferred to treasurer
     event TokensSwapExecuted(
@@ -32,9 +35,11 @@ contract TychoSwapExecutor is ITakerInteraction {
     );
 
     /// @param _executor The address of the treasurer wallet
-    constructor(address _executor) {
+    constructor(address _executor, address _tychoRouterAddress) {
         if (_executor == address(0)) revert InvalidExecutor();
         executor = _executor;
+        tychoRouterAddress = _tychoRouterAddress;
+        tychoRouter = TychoRouter(_tychoRouterAddress);
     }
 
     /// @notice Taker's interaction callback that executes the swap
@@ -59,6 +64,7 @@ contract TychoSwapExecutor is ITakerInteraction {
         console2.log("SwapExecutor: takerInteraction");
         console2.log("extraData Below");
         console2.logBytes(extraData);
+        bytes memory tychoSwap = abi.decode(extraData, (bytes));
         // console2.logbytes32("SwapExecutor: orderHash", orderHash);
         // console2.logbytes32(orderHash);
         console2.log("SwapExecutor: taker", taker);
@@ -73,6 +79,9 @@ contract TychoSwapExecutor is ITakerInteraction {
         uint256 outputAmount = takingAmount;
 
         // TODO: Implement the swap logic here using tycho router
+        uint256 amountOut = tychoRouter.singleSwap(
+            inputAmount, inputToken, outputToken, outputAmount, false, false, maker, true, tychoSwap
+        );
         // Use SafeERC20 for safe token transfers
         // IERC20(inputToken).safeTransferFrom(maker, taker, makingAmount);
         // IERC20(outputToken).safeTransferFrom(taker, maker, outputAmount); //TODO replace this with the swap logic

@@ -65,6 +65,16 @@ contract TychoSwapExecutorTest is Test, Deployers {
         return uint256(answer);
     }
 
+    function createTychoSingleSwapUniswapV2(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut)
+        internal
+        returns (bytes memory tychoSwap)
+    {
+        bytes memory protocolData =
+            encodeUniswapV2Swap(WETH_ADDR, WETH_DAI_POOL, ALICE, false, RestrictTransferFrom.TransferType.TransferFrom);
+
+        bytes memory tychooSwap = encodeSingleSwap(address(usv2Executor), protocolData);
+    }
+
     function testSingleSwapNoPermit2() public {
         // Trade 1 WETH for DAI with 1 swap on Uniswap V2
         // Checks amount out at the end
@@ -140,6 +150,17 @@ contract TychoSwapExecutorTest is Test, Deployers {
         bytes32 orderData = swap.hashOrder(convertOrder(order));
         (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
+        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
+        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
+        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
+        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
+
+        // ===== Begin of Taker Tasks =====
+        // Create Tycho Swap
+        bytes memory tychoSwap = createTychoSingleSwapUniswapV2(
+            address(baseOrder.makerAsset), address(baseOrder.takerAsset), baseOrder.makingAmount, baseOrder.takingAmount
+        );
+
         // Build taker traits
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
             false, // If set, the protocol implies that the passed amount is the making amount
@@ -150,18 +171,15 @@ contract TychoSwapExecutorTest is Test, Deployers {
             "", // extension (Comes from OrderUtils.buildOrder)
             // Taker’s interaction calldata coded in args argument length: TODO fill this out with swap payload
             abi.encodePacked(
-                address(swapExecutor), hex"0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
+                // address(swapExecutor), hex"0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
+                address(swapExecutor),
+                tychoSwap
             ), // interaction with TychoSwapExecutor TODO fill this out with swap payload
             0.99 ether // threshold
         );
         console2.log("takerTraits Below");
         console2.logBytes(takerTraits.args);
         console2.log("LimitOrderProtocol(address)", address(swap));
-
-        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
-        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
-        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
-        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
 
         // Record initial balances
         uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
