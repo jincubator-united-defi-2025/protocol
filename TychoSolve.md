@@ -21,7 +21,7 @@
 
 ## Implementation Approach
 
-    1. TychoFillPredicate.sol (Predicate): copied from chainLinkCalculator.sol
+    1. TychoFillPredicate.sol (Predicate): copied from OracleCalculator.sol
     2. TychoFillInteraction.sol : copied from RebalancerInteraction.sol
     3. TychoResolver.sol: Copied from ResolverCrossChain.sol and Dispatcher.sol
     4. Tests copied from RebalancerInteraction.t.sol and enhanced with
@@ -88,7 +88,7 @@ function takerInteraction(
 
 - Resolver Contract executes calls to Tycho Dispatcher or Router
 - Three functions
-  - preInteraction: used in chainLinkCalculator (to ensure price before swap)
+  - preInteraction: used in OracleCalculator (to ensure price before swap)
   - takerInteraction used in SwapExecutor to Execute Swap by Taker
   - postInteraction used in Rebalancer to Send Funds to Treasury
 
@@ -101,7 +101,7 @@ function takerInteraction(
 
 2. **Predicate Logic**:
 
-   - What predicate logic will TychoFill.sol use? Will it be similar to chainLinkCalculator.sol with price comparisons?
+   - What predicate logic will TychoFill.sol use? Will it be similar to OracleCalculator.sol with price comparisons?
    - How will the predicate determine when a solve is profitable vs. when it should execute?
 
 3. **Solver Payload Structure**:
@@ -126,7 +126,7 @@ function takerInteraction(
 
 7. **Oracle Integration**:
 
-   - Will TychoFill use the same Chainlink oracle approach as chainLinkCalculator ?
+   - Will TychoFill use the same Chainlink oracle approach as OracleCalculator ?
    - How will price feeds be validated and updated?
 
 8. **Cross-Chain Considerations**:
@@ -137,7 +137,7 @@ function takerInteraction(
 
 1. **Phase 1: Core Contract Development**
 
-   - Create `TychoFill.sol` based on `chainLinkCalculator.sol`
+   - Create `TychoFill.sol` based on `OracleCalculator.sol`
 
      - Implement predicate logic for profitable solve detection
      - Add Tycho-specific price calculation methods

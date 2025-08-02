@@ -7,7 +7,7 @@
 1. Create an Interaction Contract called RebalancerInteraction.sol (in the src directory)
 2. Create a test contract called RebalancerInteraction.t.sol (in the test directory)
 3. In RebalancerInteraction.t.sol
-   1. Create test scenarios the same as in chainLinkCalculator .t.sol
+   1. Create test scenarios the same as in OracleCalculator .t.sol
    2. Add to that an Interaction using RebalancerInteraction.sol which
       1. Takes the output tokens the taker receives
       2. Transfers them to a third wallet (addr3) which is a treasurer
@@ -57,7 +57,7 @@ function postInteraction(
 
 ### 2. RebalancerInteraction.t.sol (test directory)
 
-**Purpose**: Comprehensive test suite that replicates all chainLinkCalculator scenarios with added treasurer functionality.
+**Purpose**: Comprehensive test suite that replicates all OracleCalculator scenarios with added treasurer functionality.
 
 **Test Coverage**:
 

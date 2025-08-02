@@ -14,9 +14,8 @@ import {Permit2Deployer} from "test/helpers/Permit2.sol";
 import {LimitOrderProtocolDeployer} from "test/helpers/LimitOrderProtocolManager.sol";
 import {AggregatorMock} from "src/mocks/1inch/AggregatorMock.sol";
 import {Dispatcher} from "src/Dispatcher.sol";
-import {ChainLinkCalculator} from "src/ChainLinkCalculator.sol";
+import {OracleCalculator} from "src/OracleCalculator.sol";
 import {RebalancerInteraction} from "src/RebalancerInteraction.sol";
-import {SwapExecutor} from "src/SwapExecutor.sol";
 import {TychoSwapExecutor} from "src/TychoSwapExecutor.sol";
 import {TychoRouterTestSetup} from "test/tycho/TychoRouterTestSetup.sol";
 
@@ -35,9 +34,8 @@ contract Deployers is Test, TychoRouterTestSetup {
     AggregatorMock public inchOracle;
     ILimitOrderProtocol public swap;
     Dispatcher public dispatcher;
-    ChainLinkCalculator public chainLinkCalculator;
+    OracleCalculator public oracleCalculator;
     RebalancerInteraction public rebalancerInteraction;
-    SwapExecutor public swapExecutor;
     TychoSwapExecutor public tychoSwapExecutor;
 
     // Test users - global variables
@@ -121,8 +119,7 @@ contract Deployers is Test, TychoRouterTestSetup {
         inchOracle = new AggregatorMock(1000000000000000000);
         deployLimitOrderProtocol(address(weth));
         dispatcher = new Dispatcher();
-        chainLinkCalculator = new ChainLinkCalculator();
-        swapExecutor = new SwapExecutor(address(dispatcher));
+        oracleCalculator = new OracleCalculator();
         tychoSwapExecutor = new TychoSwapExecutor(address(dispatcher), payable(tychoRouter));
         setupUsers();
         rebalancerInteraction = new RebalancerInteraction(address(treasurerAddr));
