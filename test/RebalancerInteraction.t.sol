@@ -3,7 +3,6 @@ pragma solidity ^0.8.23;
 
 import {Test, console2} from "forge-std/Test.sol";
 import {ChainLinkCalculator} from "src/ChainLinkCalculator.sol";
-import {RebalancerInteraction} from "src/RebalancerInteraction.sol";
 import {Deployers} from "test/utils/Deployers.sol";
 import {OrderUtils} from "test/utils/OrderUtils.sol";
 // import {LimitOrderProtocol} from "@jincubator/limit-order-protocol/contracts/LimitOrderProtocol.sol";
@@ -20,18 +19,11 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract RebalancerInteractionTest is Test, Deployers {
     using OrderUtils for *;
 
-    RebalancerInteraction public rebalancerInteraction;
     address public addr3; // Treasurer address
 
     function setUp() public {
         // Deploy contracts
         deployArtifacts();
-
-        // Setup treasurer address
-        addr3 = makeAddr("treasurer");
-
-        // Deploy RebalancerInteraction contract
-        rebalancerInteraction = new RebalancerInteraction(addr3);
     }
 
     function buildSinglePriceCalldata(address chainlinkCalcAddress, address oracleAddress, uint256 spread, bool inverse)

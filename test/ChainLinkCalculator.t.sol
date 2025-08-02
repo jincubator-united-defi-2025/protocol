@@ -15,7 +15,7 @@ import {Address} from "@1inch/solidity-utils/contracts/libraries/AddressLib.sol"
 import {MakerTraits} from "@jincubator/limit-order-protocol/contracts/libraries/MakerTraitsLib.sol";
 import {TakerTraits} from "@jincubator/limit-order-protocol/contracts/libraries/TakerTraitsLib.sol";
 
-contract chainLinkCalculator Test is Test, Deployers {
+contract ChainLinkCalculatorTest is Test, Deployers {
     using OrderUtils for *;
 
     function setUp() public {
@@ -50,7 +50,7 @@ contract chainLinkCalculator Test is Test, Deployers {
         // DAI oracle: 1 ETH = 4000 DAI (0.00025 ETH per DAI)
         daiOracle = new AggregatorMock(0.00025 ether);
 
-        address chainlinkCalcAddress = address(chainLinkCalculator );
+        address chainlinkCalcAddress = address(chainLinkCalculator);
         address oracleAddress = address(daiOracle);
 
         // Build order with chainlink price data
@@ -137,7 +137,7 @@ contract chainLinkCalculator Test is Test, Deployers {
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
 
-        address chainlinkCalcAddress = address(chainLinkCalculator );
+        address chainlinkCalcAddress = address(chainLinkCalculator);
         address oracleAddress = address(daiOracle);
 
         // Build order with chainlink price data
@@ -222,7 +222,7 @@ contract chainLinkCalculator Test is Test, Deployers {
         daiOracle = new AggregatorMock(0.00025 ether); // 1 ETH = 4000 DAI
         inchOracle = new AggregatorMock(1577615249227853); // 1 INCH = 0.0001577615249227853 ETH
 
-        address chainlinkCalcAddress = address(chainLinkCalculator );
+        address chainlinkCalcAddress = address(chainLinkCalculator);
         address oracleAddress1 = address(inchOracle);
         address oracleAddress2 = address(daiOracle);
 
@@ -321,7 +321,7 @@ contract chainLinkCalculator Test is Test, Deployers {
         daiOracle = new AggregatorMock(0.00025 ether); // 1 ETH = 4000 DAI
         inchOracle = new AggregatorMock(1577615249227853); // 1 INCH = 0.0001577615249227853 ETH
 
-        address chainlinkCalcAddress = address(chainLinkCalculator );
+        address chainlinkCalcAddress = address(chainLinkCalculator);
         address oracleAddress1 = address(inchOracle);
         address oracleAddress2 = address(daiOracle);
 
@@ -423,13 +423,13 @@ contract chainLinkCalculator Test is Test, Deployers {
 
         // Build price call for predicate
         bytes memory priceCall =
-            abi.encodeWithSelector(chainLinkCalculator .doublePrice.selector, inchOracle, daiOracle, int256(0), 1 ether);
+            abi.encodeWithSelector(chainLinkCalculator.doublePrice.selector, inchOracle, daiOracle, int256(0), 1 ether);
 
         // Build predicate call
         bytes memory predicate = abi.encodeWithSelector(
             swap.lt.selector,
             6.32 ether,
-            abi.encodeWithSelector(swap.arbitraryStaticCall.selector, address(chainLinkCalculator ), priceCall)
+            abi.encodeWithSelector(swap.arbitraryStaticCall.selector, address(chainLinkCalculator), priceCall)
         );
 
         // Build order with predicate
@@ -505,7 +505,7 @@ contract chainLinkCalculator Test is Test, Deployers {
 
         // Build price call for predicate (invalid threshold)
         bytes memory priceCall =
-            abi.encodeWithSelector(chainLinkCalculator .doublePrice.selector, inchOracle, daiOracle, int256(0), 1 ether);
+            abi.encodeWithSelector(chainLinkCalculator.doublePrice.selector, inchOracle, daiOracle, int256(0), 1 ether);
 
         // Build predicate call with invalid threshold
         bytes memory predicate = abi.encodeWithSelector(

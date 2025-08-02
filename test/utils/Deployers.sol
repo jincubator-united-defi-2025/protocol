@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {ChainLinkCalculator} from "src/ChainLinkCalculator.sol";
 import {MockERC20} from "solmate/src/test/utils/mocks/MockERC20.sol";
 import {ERC20} from "the-compact/lib/solady/src/tokens/ERC20.sol";
 import {WETH} from "the-compact/lib/solady/src/tokens/WETH.sol";
@@ -13,6 +12,8 @@ import {ILimitOrderProtocol} from "src/interfaces/1inch/ILimitOrderProtocol.sol"
 import {Permit2Deployer} from "test/helpers/Permit2.sol";
 import {LimitOrderProtocolDeployer} from "test/helpers/LimitOrderProtocolManager.sol";
 import {AggregatorMock} from "src/mocks/1inch/AggregatorMock.sol";
+import {Dispatcher} from "src/Dispatcher.sol";
+import {ChainLinkCalculator} from "src/ChainLinkCalculator.sol";
 import {RebalancerInteraction} from "src/RebalancerInteraction.sol";
 import {SwapExecutor} from "src/SwapExecutor.sol";
 
@@ -30,7 +31,8 @@ contract Deployers is Test {
     AggregatorMock public daiOracle;
     AggregatorMock public inchOracle;
     ILimitOrderProtocol public swap;
-    chainLinkCalculator public chainLinkCalculator;
+    Dispatcher public dispatcher;
+    ChainLinkCalculator public chainLinkCalculator;
     RebalancerInteraction public rebalancerInteraction;
     SwapExecutor public swapExecutor;
 
@@ -39,10 +41,13 @@ contract Deployers is Test {
     uint256 public makerPK;
     address public takerAddr;
     uint256 public takerPK;
+    address public treasurerAddr; //TODO: Create a Treasurer contract
+    uint256 public treasurerPK;
 
     function setupUsers() internal {
         (makerAddr, makerPK) = makeAddrAndKey("makerAddr");
         (takerAddr, takerPK) = makeAddrAndKey("takerAddr");
+        (treasurerAddr, treasurerPK) = makeAddrAndKey("treasurerAddr");
         // Mint tokens to test addresses
         dai.mint(takerAddr, 1_000_000 ether);
         dai.mint(makerAddr, 1_000_000 ether);
@@ -110,9 +115,10 @@ contract Deployers is Test {
         daiOracle = new AggregatorMock(1000000000000000000);
         inchOracle = new AggregatorMock(1000000000000000000);
         deployLimitOrderProtocol(address(weth));
-        chainLinkCalculator = new chainLinkCalculator();
-        RebalancerInteraction = new RebalancerInteraction();
-        swapExecutor = new swapExecutor();
+        dispatcher = new Dispatcher();
+        chainLinkCalculator = new ChainLinkCalculator();
+        swapExecutor = new SwapExecutor(address(dispatcher));
         setupUsers();
+        rebalancerInteraction = new RebalancerInteraction(address(treasurerAddr));
     }
 }
