@@ -39,3 +39,8 @@ docs/
 ## End Forge standard ignore
 
 .DS_Store
+
+
+# env files
+
+**/.env

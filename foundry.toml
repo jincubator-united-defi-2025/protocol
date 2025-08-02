@@ -32,7 +32,14 @@ remappings = [
     "@interfaces/=lib/tycho-execution/foundry/interfaces/",
     "@src/=lib/tycho-execution/foundry/src/",
     "@ekubo/=lib/tycho-execution/foundry/lib/ekubo/",
-    "@solady/=lib/tycho-execution/foundry/lib/solady/"
+    "@solady/=lib/tycho-execution/foundry/lib/solady/src/",
+    "@balancer-labs/v2-interfaces/=lib/tycho-execution/foundry/lib/balancer-v2-monorepo/pkg/interfaces/",
+    "@balancer-labs/v3-interfaces/=lib/tycho-execution/foundry/lib/balancer-v3-monorepo/pkg/interfaces/"
 ]
+
+
+[rpc_endpoints]
+mainnet = "${MAINNET_RPC_URL}"
+
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
