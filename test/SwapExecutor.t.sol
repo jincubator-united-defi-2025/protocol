@@ -53,9 +53,9 @@ contract SwapExecutorTest is Test, Deployers {
         return abi.encodePacked(interactionAddress);
     }
 
-    function addApprovalsForTaker(address taker, address token, uint256 amount) internal {
-        vm.prank(taker);
-        IERC20(token).approve(address(rebalancerInteraction), amount);
+    function addApproval(address granter, address spender, address token, uint256 amount) internal {
+        vm.prank(granter);
+        IERC20(token).approve(address(spender), amount);
     }
 
     function test_eth_to_dai_chainlink_order_with_rebalancer_and_swapExecutor() public {
@@ -134,10 +134,16 @@ contract SwapExecutorTest is Test, Deployers {
         );
         console2.log("takerTraits Below");
         console2.logBytes(takerTraits.args);
+        console2.log("LimitOrderProtocol(address)", address(swap));
 
-        // Approve rebalancer contract to transfer tokens on behalf of taker
-        vm.prank(takerAddr);
-        weth.approve(address(rebalancerInteraction), 1 ether);
+        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
+        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
+        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
+        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
+        // Add approvals for maker to allow rebalancer contract to transfer output tokens to treasurer
+        // addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.takerAsset), baseOrder.takingAmount);
+        // Add approvals for taker to allow rebalancer contract to transfer input tokens to treasurer
+        addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.makerAsset), baseOrder.makingAmount);
 
         // Record initial balances
         uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
@@ -230,8 +236,14 @@ contract SwapExecutorTest is Test, Deployers {
             1.01 ether // threshold
         );
 
-        // Add approvals for rebalancer
-        addApprovalsForTaker(takerAddr, address(dai), 4000 ether);
+        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
+        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
+        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
+        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
+        // Add approvals for maker to allow rebalancer contract to transfer output tokens to treasurer
+        // addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.takerAsset), baseOrder.takingAmount);
+        // Add approvals for taker to allow rebalancer contract to transfer input tokens to treasurer
+        addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.makerAsset), baseOrder.makingAmount);
 
         // Record initial balances
         uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
@@ -332,9 +344,14 @@ contract SwapExecutorTest is Test, Deployers {
             "", // interaction
             takingAmount * takingSpread / 1e9 + 0.01 ether // threshold
         );
-
-        // Add approvals for rebalancer
-        addApprovalsForTaker(takerAddr, address(inch), 1000 ether);
+        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
+        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
+        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
+        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
+        // Add approvals for maker to allow rebalancer contract to transfer output tokens to treasurer
+        // addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.takerAsset), baseOrder.takingAmount);
+        // Add approvals for taker to allow rebalancer contract to transfer input tokens to treasurer
+        addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.makerAsset), baseOrder.makingAmount);
 
         // Record initial balances
         uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
@@ -441,7 +458,15 @@ contract SwapExecutorTest is Test, Deployers {
         );
 
         // Add approvals for rebalancer
-        addApprovalsForTaker(takerAddr, address(inch), 1000 ether);
+
+        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
+        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
+        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
+        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
+        // Add approvals for maker to allow rebalancer contract to transfer output tokens to treasurer
+        // addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.takerAsset), baseOrder.takingAmount);
+        // Add approvals for taker to allow rebalancer contract to transfer input tokens to treasurer
+        addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.makerAsset), baseOrder.makingAmount);
 
         // Record initial balances
         uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
@@ -536,8 +561,14 @@ contract SwapExecutorTest is Test, Deployers {
             takingAmount + 0.01 ether // threshold
         );
 
-        // Add approvals for rebalancer
-        addApprovalsForTaker(takerAddr, address(inch), 1000 ether);
+        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
+        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
+        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
+        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
+        // Add approvals for maker to allow rebalancer contract to transfer output tokens to treasurer
+        // addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.takerAsset), baseOrder.takingAmount);
+        // Add approvals for taker to allow rebalancer contract to transfer input tokens to treasurer
+        addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.makerAsset), baseOrder.makingAmount);
 
         // Record initial balances
         uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
@@ -703,9 +734,14 @@ contract SwapExecutorTest is Test, Deployers {
             takingAmount // threshold
         );
 
-        // Add approvals for rebalancer
-        addApprovalsForTaker(takerAddr, address(weth), 1 ether);
-        addApprovalsForTaker(takerAddr, address(inch), 1000 ether); // Approve INCH tokens for rebalancer
+        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
+        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
+        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
+        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
+        // Add approvals for maker to allow rebalancer contract to transfer output tokens to treasurer
+        // addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.takerAsset), baseOrder.takingAmount);
+        // Add approvals for taker to allow rebalancer contract to transfer input tokens to treasurer
+        addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.makerAsset), baseOrder.makingAmount);
 
         // Record initial balances
         uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
@@ -776,8 +812,14 @@ contract SwapExecutorTest is Test, Deployers {
             0.99 ether // threshold
         );
 
-        // Add approvals for rebalancer
-        addApprovalsForTaker(takerAddr, address(weth), 1 ether);
+        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
+        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
+        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
+        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
+        // Add approvals for maker to allow rebalancer contract to transfer output tokens to treasurer
+        // addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.takerAsset), baseOrder.takingAmount);
+        // Add approvals for taker to allow rebalancer contract to transfer input tokens to treasurer
+        addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.makerAsset), baseOrder.makingAmount);
 
         // Record initial balances
         uint256 treasurerAddrWethBalanceBefore = weth.balanceOf(treasurerAddr);
@@ -844,8 +886,14 @@ contract SwapExecutorTest is Test, Deployers {
             0.49 ether // threshold
         );
 
-        // Add approvals for rebalancer
-        addApprovalsForTaker(takerAddr, address(weth), 0.5 ether);
+        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
+        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
+        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
+        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
+        // Add approvals for maker to allow rebalancer contract to transfer output tokens to treasurer
+        // addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.takerAsset), baseOrder.takingAmount);
+        // Add approvals for taker to allow rebalancer contract to transfer input tokens to treasurer
+        addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.makerAsset), baseOrder.makingAmount);
 
         // Record initial balances
         uint256 treasurerAddrWethBalanceBefore = weth.balanceOf(treasurerAddr);
