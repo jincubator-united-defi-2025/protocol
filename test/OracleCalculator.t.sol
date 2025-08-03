@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.30;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {ChainLinkCalculator} from "src/ChainLinkCalculator.sol";
+import {OracleCalculator} from "src/OracleCalculator.sol";
 import {Deployers} from "test/utils/Deployers.sol";
 import {OrderUtils} from "test/utils/orderUtils/OrderUtils.sol";
 // import {LimitOrderProtocol} from "@jincubator/limit-order-protocol/contracts/LimitOrderProtocol.sol";
@@ -14,9 +14,8 @@ import {IOrderMixin} from "@jincubator/limit-order-protocol/contracts/interfaces
 import {Address} from "@1inch/solidity-utils/contracts/libraries/AddressLib.sol";
 import {MakerTraits} from "@jincubator/limit-order-protocol/contracts/libraries/MakerTraitsLib.sol";
 import {TakerTraits} from "@jincubator/limit-order-protocol/contracts/libraries/TakerTraitsLib.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract SwapExecutorTest is Test, Deployers {
+contract OracleCalculatorTest is Test, Deployers {
     using OrderUtils for *;
 
     function buildSinglePriceCalldata(address chainlinkCalcAddress, address oracleAddress, uint256 spread, bool inverse)
@@ -38,20 +37,7 @@ contract SwapExecutorTest is Test, Deployers {
             abi.encodePacked(chainlinkCalcAddress, bytes1(0x40), oracleAddress1, oracleAddress2, decimalsScale, spread);
     }
 
-    function buildPostInteractionCalldata(address interactionAddress) internal pure returns (bytes memory) {
-        return abi.encodePacked(interactionAddress);
-    }
-
-    function buildTakerInteractionCalldata(address interactionAddress) internal pure returns (bytes memory) {
-        return abi.encodePacked(interactionAddress);
-    }
-
-    function addApproval(address granter, address spender, address token, uint256 amount) internal {
-        vm.prank(granter);
-        IERC20(token).approve(address(spender), amount);
-    }
-
-    function test_eth_to_dai_chainlink_order_with_rebalancer_and_swapExecutor() public {
+    function test_eth_to_dai_chainlink_order() public {
         // Advance block timestamp to ensure oracle data is considered fresh
         vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
@@ -59,7 +45,7 @@ contract SwapExecutorTest is Test, Deployers {
         // DAI oracle: 1 ETH = 4000 DAI (0.00025 ETH per DAI)
         daiOracle = new AggregatorMock(0.00025 ether);
 
-        address chainlinkCalcAddress = address(chainLinkCalculator);
+        address chainlinkCalcAddress = address(oracleCalculator);
         address oracleAddress = address(daiOracle);
 
         // Build order with chainlink price data
@@ -88,9 +74,6 @@ contract SwapExecutorTest is Test, Deployers {
             true
         );
 
-        bytes memory postInteractionData = buildPostInteractionCalldata(address(rebalancerInteraction));
-        bytes memory takerInteractionData = buildTakerInteractionCalldata(address(swapExecutor));
-
         (OrderUtils.Order memory order, bytes memory extension) = OrderUtils.buildOrder(
             baseOrder,
             "", // makerAssetSuffix
@@ -99,51 +82,35 @@ contract SwapExecutorTest is Test, Deployers {
             takingAmountData,
             "", // predicate
             "", // permit
-            // takerInteractionData, // preInteraction SwapExecutor address
-            "", // preInteraction SwapExecutor address
-            postInteractionData, // postInteraction Rebalancer address
-            ""
+            "", // preInteraction
+            "", // postInteraction
+            "" // customData
         );
-        // "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20" // taker interaction to execute during the fill,
+        console2.logBytes(extension);
 
         // Sign the order
         bytes32 orderData = swap.hashOrder(convertOrder(order));
+        console2.log("Order hash:", uint256(orderData));
+        console2.log("Expected maker:", makerAddr);
         (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
 
         // Build taker traits
         OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
-            false, // If set, the protocol implies that the passed amount is the making amount
-            false, // If set, the WETH will be unwrapped into ETH before sending to the taker's target address.
-            false, // skipMakerPermit Unused
-            false, // If set, the order uses the Uniswap Permit 2.
-            "", // If set, then first 20 bytes of args are treated as target address for maker’s funds transfer
+            false, // makingAmount
+            false, // unwrapWeth
+            false, // skipMakerPermit
+            false, // usePermit2
+            "", // target
             extension, // extension
-                // takerInteractionData, // Taker’s interaction calldata coded in args argument length
-                // "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20", // taker interaction to execute during the fill,
-            abi.encodePacked(
-                address(swapExecutor), hex"0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
-            ), // "", // interaction TODO fill this out with swap payload
+            "", // interaction
             0.99 ether // threshold
         );
-        console2.log("takerTraits Below");
-        console2.logBytes(takerTraits.args);
-        console2.log("LimitOrderProtocol(address)", address(swap));
-
-        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
-        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
-        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
-        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
-        // Add approvals for maker to allow rebalancer contract to transfer output tokens to treasurer
-        // addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.takerAsset), baseOrder.takingAmount);
-        // Add approvals for taker to allow rebalancer contract to transfer input tokens to treasurer
-        addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.makerAsset), baseOrder.makingAmount);
 
         // Record initial balances
         uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
         uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
         uint256 addrWethBalanceBefore = weth.balanceOf(takerAddr);
         uint256 makerAddrWethBalanceBefore = weth.balanceOf(makerAddr);
-        uint256 treasurerAddrWethBalanceBefore = weth.balanceOf(treasurerAddr);
 
         // Fill the order
         vm.prank(takerAddr);
@@ -154,22 +121,18 @@ contract SwapExecutorTest is Test, Deployers {
         // Verify balance changes
         assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - 4000 ether);
         assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + 4000 ether);
-        // Taker doesn't receive WETH because it's transferred to treasurer
-        assertEq(weth.balanceOf(takerAddr), addrWethBalanceBefore);
+        assertEq(weth.balanceOf(takerAddr), addrWethBalanceBefore + 0.99 ether);
         assertEq(weth.balanceOf(makerAddr), makerAddrWethBalanceBefore - 0.99 ether);
-
-        // Verify treasurer received the output tokens
-        assertEq(weth.balanceOf(treasurerAddr), treasurerAddrWethBalanceBefore + 0.99 ether);
     }
 
-    function test_dai_to_eth_chainlink_order_with_rebalancer() public {
+    function test_dai_to_eth_chainlink_order() public {
         // Advance block timestamp to ensure oracle data is considered fresh
         vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether);
 
-        address chainlinkCalcAddress = address(chainLinkCalculator);
+        address chainlinkCalcAddress = address(oracleCalculator);
         address oracleAddress = address(daiOracle);
 
         // Build order with chainlink price data
@@ -198,8 +161,6 @@ contract SwapExecutorTest is Test, Deployers {
             false
         );
 
-        bytes memory postInteractionData = buildPostInteractionCalldata(address(rebalancerInteraction));
-
         (OrderUtils.Order memory order, bytes memory extension) = OrderUtils.buildOrder(
             baseOrder,
             "", // makerAssetSuffix
@@ -209,7 +170,7 @@ contract SwapExecutorTest is Test, Deployers {
             "", // predicate
             "", // permit
             "", // preInteraction
-            postInteractionData, // postInteraction
+            "", // postInteraction
             "" // customData
         );
 
@@ -223,27 +184,17 @@ contract SwapExecutorTest is Test, Deployers {
             false, // unwrapWeth
             false, // skipMakerPermit
             false, // usePermit2
-            "", // target address for maker’s funds transfer
-            extension, // Extension calldata coded in args argument length
-            "", // Taker’s interaction calldata coded in args argument length
+            "", // target
+            extension, // extension
+            "", // interaction
             1.01 ether // threshold
         );
-
-        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
-        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
-        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
-        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
-        // Add approvals for maker to allow rebalancer contract to transfer output tokens to treasurer
-        // addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.takerAsset), baseOrder.takingAmount);
-        // Add approvals for taker to allow rebalancer contract to transfer input tokens to treasurer
-        addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.makerAsset), baseOrder.makingAmount);
 
         // Record initial balances
         uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
         uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
         uint256 addrWethBalanceBefore = weth.balanceOf(takerAddr);
         uint256 makerAddrWethBalanceBefore = weth.balanceOf(makerAddr);
-        uint256 treasurerAddrDaiBalanceBefore = dai.balanceOf(treasurerAddr);
 
         // Fill the order
         vm.prank(takerAddr);
@@ -252,17 +203,13 @@ contract SwapExecutorTest is Test, Deployers {
         );
 
         // Verify balance changes
-        // Taker doesn't receive DAI because it's transferred to treasurer
-        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore);
+        assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore + 4000 ether);
         assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore - 4000 ether);
         assertEq(weth.balanceOf(takerAddr), addrWethBalanceBefore - 1.01 ether);
         assertEq(weth.balanceOf(makerAddr), makerAddrWethBalanceBefore + 1.01 ether);
-
-        // Verify treasurer received the output tokens (DAI)
-        assertEq(dai.balanceOf(treasurerAddr), treasurerAddrDaiBalanceBefore + 4000 ether);
     }
 
-    function test_dai_to_1inch_chainlink_order_takingAmountData_with_rebalancer() public {
+    function test_dai_to_1inch_chainlink_order_takingAmountData() public {
         // Advance block timestamp to ensure oracle data is considered fresh
         vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
@@ -270,7 +217,7 @@ contract SwapExecutorTest is Test, Deployers {
         daiOracle = new AggregatorMock(0.00025 ether); // 1 ETH = 4000 DAI
         inchOracle = new AggregatorMock(1577615249227853); // 1 INCH = 0.0001577615249227853 ETH
 
-        address chainlinkCalcAddress = address(chainLinkCalculator);
+        address chainlinkCalcAddress = address(oracleCalculator);
         address oracleAddress1 = address(inchOracle);
         address oracleAddress2 = address(daiOracle);
 
@@ -307,8 +254,6 @@ contract SwapExecutorTest is Test, Deployers {
             takingSpread
         );
 
-        bytes memory postInteractionData = buildPostInteractionCalldata(address(rebalancerInteraction));
-
         (OrderUtils.Order memory order, bytes memory extension) = OrderUtils.buildOrder(
             baseOrder,
             "", // makerAssetSuffix
@@ -318,7 +263,7 @@ contract SwapExecutorTest is Test, Deployers {
             "", // predicate
             "", // permit
             "", // preInteraction
-            postInteractionData, // postInteraction
+            "", // postInteraction
             "" // customData
         );
 
@@ -337,21 +282,12 @@ contract SwapExecutorTest is Test, Deployers {
             "", // interaction
             takingAmount * takingSpread / 1e9 + 0.01 ether // threshold
         );
-        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
-        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
-        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
-        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
-        // Add approvals for maker to allow rebalancer contract to transfer output tokens to treasurer
-        // addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.takerAsset), baseOrder.takingAmount);
-        // Add approvals for taker to allow rebalancer contract to transfer input tokens to treasurer
-        addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.makerAsset), baseOrder.makingAmount);
 
         // Record initial balances
         uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
         uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
         uint256 addrInchBalanceBefore = inch.balanceOf(takerAddr);
         uint256 makerAddrInchBalanceBefore = inch.balanceOf(makerAddr);
-        uint256 treasurerAddrInchBalanceBefore = inch.balanceOf(treasurerAddr);
 
         // Fill the order
         vm.prank(takerAddr);
@@ -366,23 +302,21 @@ contract SwapExecutorTest is Test, Deployers {
         // Verify balance changes
         assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - realTakingAmount);
         assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + realTakingAmount);
-        // Taker doesn't receive INCH because it's transferred to treasurer
-        assertEq(inch.balanceOf(takerAddr), addrInchBalanceBefore);
+        assertEq(inch.balanceOf(takerAddr), addrInchBalanceBefore + makingAmount);
         assertEq(inch.balanceOf(makerAddr), makerAddrInchBalanceBefore - makingAmount);
-
-        // Verify treasurer received the output tokens (INCH)
-        assertEq(inch.balanceOf(treasurerAddr), treasurerAddrInchBalanceBefore + makingAmount);
     }
 
-    function test_dai_to_1inch_chainlink_order_makingAmountData_with_rebalancer() public {
+    function test_dai_to_1inch_chainlink_order_makingAmountData() public {
         // Advance block timestamp to ensure oracle data is considered fresh
+        // The OracleCalculator  checks if updatedAt + 4 hours < block.timestamp
+        // Minimum advancement needed: 99 seconds
         vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
         // Setup oracles with specific prices
         daiOracle = new AggregatorMock(0.00025 ether); // 1 ETH = 4000 DAI
         inchOracle = new AggregatorMock(1577615249227853); // 1 INCH = 0.0001577615249227853 ETH
 
-        address chainlinkCalcAddress = address(chainLinkCalculator);
+        address chainlinkCalcAddress = address(oracleCalculator);
         address oracleAddress1 = address(inchOracle);
         address oracleAddress2 = address(daiOracle);
 
@@ -419,8 +353,6 @@ contract SwapExecutorTest is Test, Deployers {
             1010000000 // taker offset is 1.01
         );
 
-        bytes memory postInteractionData = buildPostInteractionCalldata(address(rebalancerInteraction));
-
         (OrderUtils.Order memory order, bytes memory extension) = OrderUtils.buildOrder(
             baseOrder,
             "", // makerAssetSuffix
@@ -430,7 +362,7 @@ contract SwapExecutorTest is Test, Deployers {
             "", // predicate
             "", // permit
             "", // preInteraction
-            postInteractionData, // postInteraction
+            "", // postInteraction
             "" // customData
         );
 
@@ -450,23 +382,11 @@ contract SwapExecutorTest is Test, Deployers {
             makingAmount * makingSpread / 1e9 + 0.01 ether // threshold
         );
 
-        // Add approvals for rebalancer
-
-        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
-        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
-        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
-        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
-        // Add approvals for maker to allow rebalancer contract to transfer output tokens to treasurer
-        // addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.takerAsset), baseOrder.takingAmount);
-        // Add approvals for taker to allow rebalancer contract to transfer input tokens to treasurer
-        addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.makerAsset), baseOrder.makingAmount);
-
         // Record initial balances
         uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
         uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
         uint256 addrInchBalanceBefore = inch.balanceOf(takerAddr);
         uint256 makerAddrInchBalanceBefore = inch.balanceOf(makerAddr);
-        uint256 treasurerAddrInchBalanceBefore = inch.balanceOf(treasurerAddr);
 
         // Fill the order
         vm.prank(takerAddr);
@@ -481,15 +401,11 @@ contract SwapExecutorTest is Test, Deployers {
         // Verify balance changes
         assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - takingAmount);
         assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + takingAmount);
-        // Taker doesn't receive INCH because it's transferred to treasurer
-        assertEq(inch.balanceOf(takerAddr), addrInchBalanceBefore);
+        assertEq(inch.balanceOf(takerAddr), addrInchBalanceBefore + realMakingAmount);
         assertEq(inch.balanceOf(makerAddr), makerAddrInchBalanceBefore - realMakingAmount);
-
-        // Verify treasurer received the output tokens (INCH)
-        assertEq(inch.balanceOf(treasurerAddr), treasurerAddrInchBalanceBefore + realMakingAmount);
     }
 
-    function test_dai_to_1inch_stop_loss_order_with_rebalancer() public {
+    function test_dai_to_1inch_stop_loss_order() public {
         // Advance block timestamp to ensure oracle data is considered fresh
         vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
@@ -502,13 +418,13 @@ contract SwapExecutorTest is Test, Deployers {
 
         // Build price call for predicate
         bytes memory priceCall =
-            abi.encodeWithSelector(chainLinkCalculator.doublePrice.selector, inchOracle, daiOracle, int256(0), 1 ether);
+            abi.encodeWithSelector(oracleCalculator.doublePrice.selector, inchOracle, daiOracle, int256(0), 1 ether);
 
         // Build predicate call
         bytes memory predicate = abi.encodeWithSelector(
             swap.lt.selector,
             6.32 ether,
-            abi.encodeWithSelector(swap.arbitraryStaticCall.selector, address(chainLinkCalculator), priceCall)
+            abi.encodeWithSelector(swap.arbitraryStaticCall.selector, address(oracleCalculator), priceCall)
         );
 
         // Build order with predicate
@@ -523,8 +439,6 @@ contract SwapExecutorTest is Test, Deployers {
             makerTraits: OrderUtils.buildMakerTraits(address(0), false, true, true, false, false, 0, 0, 0)
         });
 
-        bytes memory postInteractionData = buildPostInteractionCalldata(address(rebalancerInteraction));
-
         (OrderUtils.Order memory order, bytes memory extension) = OrderUtils.buildOrder(
             baseOrder,
             "", // makerAssetSuffix
@@ -534,7 +448,7 @@ contract SwapExecutorTest is Test, Deployers {
             predicate, // predicate
             "", // permit
             "", // preInteraction
-            postInteractionData, // postInteraction
+            "", // postInteraction
             "" // customData
         );
 
@@ -554,21 +468,11 @@ contract SwapExecutorTest is Test, Deployers {
             takingAmount + 0.01 ether // threshold
         );
 
-        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
-        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
-        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
-        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
-        // Add approvals for maker to allow rebalancer contract to transfer output tokens to treasurer
-        // addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.takerAsset), baseOrder.takingAmount);
-        // Add approvals for taker to allow rebalancer contract to transfer input tokens to treasurer
-        addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.makerAsset), baseOrder.makingAmount);
-
         // Record initial balances
         uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
         uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
         uint256 addrInchBalanceBefore = inch.balanceOf(takerAddr);
         uint256 makerAddrInchBalanceBefore = inch.balanceOf(makerAddr);
-        uint256 treasurerAddrInchBalanceBefore = inch.balanceOf(treasurerAddr);
 
         // Fill the order
         vm.prank(takerAddr);
@@ -579,15 +483,11 @@ contract SwapExecutorTest is Test, Deployers {
         // Verify balance changes
         assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - takingAmount);
         assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + takingAmount);
-        // Taker doesn't receive INCH because it's transferred to treasurer
-        assertEq(inch.balanceOf(takerAddr), addrInchBalanceBefore);
+        assertEq(inch.balanceOf(takerAddr), addrInchBalanceBefore + makingAmount);
         assertEq(inch.balanceOf(makerAddr), makerAddrInchBalanceBefore - makingAmount);
-
-        // Verify treasurer received the output tokens (INCH)
-        assertEq(inch.balanceOf(treasurerAddr), treasurerAddrInchBalanceBefore + makingAmount);
     }
 
-    function test_dai_to_1inch_stop_loss_order_predicate_invalid_with_rebalancer() public {
+    function test_dai_to_1inch_stop_loss_order_predicate_invalid() public {
         // Advance block timestamp to ensure oracle data is considered fresh
         vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
@@ -600,7 +500,7 @@ contract SwapExecutorTest is Test, Deployers {
 
         // Build price call for predicate (invalid threshold)
         bytes memory priceCall =
-            abi.encodeWithSelector(chainLinkCalculator.doublePrice.selector, inchOracle, daiOracle, int256(0), 1 ether);
+            abi.encodeWithSelector(oracleCalculator.doublePrice.selector, inchOracle, daiOracle, int256(0), 1 ether);
 
         // Build predicate call with invalid threshold
         bytes memory predicate = abi.encodeWithSelector(
@@ -621,8 +521,6 @@ contract SwapExecutorTest is Test, Deployers {
             makerTraits: OrderUtils.buildMakerTraits(address(0), false, true, true, false, false, 0, 0, 0)
         });
 
-        bytes memory postInteractionData = buildPostInteractionCalldata(address(rebalancerInteraction));
-
         (OrderUtils.Order memory order, bytes memory extension) = OrderUtils.buildOrder(
             baseOrder,
             "", // makerAssetSuffix
@@ -632,7 +530,7 @@ contract SwapExecutorTest is Test, Deployers {
             predicate, // predicate
             "", // permit
             "", // preInteraction
-            postInteractionData, // postInteraction
+            "", // postInteraction
             "" // customData
         );
 
@@ -660,7 +558,7 @@ contract SwapExecutorTest is Test, Deployers {
         );
     }
 
-    function test_eth_to_dai_stop_loss_order_with_rebalancer() public {
+    function test_eth_to_dai_stop_loss_order() public {
         // Advance block timestamp to ensure oracle data is considered fresh
         vm.warp(block.timestamp + 3600 seconds); // Increase from 99 to 3600 seconds
 
@@ -696,8 +594,6 @@ contract SwapExecutorTest is Test, Deployers {
             makerTraits: OrderUtils.buildMakerTraits(address(0), false, true, true, false, false, 0, 0, 0)
         });
 
-        bytes memory postInteractionData = buildPostInteractionCalldata(address(rebalancerInteraction));
-
         (OrderUtils.Order memory order, bytes memory extension) = OrderUtils.buildOrder(
             baseOrder,
             "", // makerAssetSuffix
@@ -707,7 +603,7 @@ contract SwapExecutorTest is Test, Deployers {
             predicate, // predicate
             "", // permit
             "", // preInteraction
-            postInteractionData, // postInteraction
+            "", // postInteraction
             "" // customData
         );
 
@@ -727,21 +623,11 @@ contract SwapExecutorTest is Test, Deployers {
             takingAmount // threshold
         );
 
-        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
-        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
-        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
-        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
-        // Add approvals for maker to allow rebalancer contract to transfer output tokens to treasurer
-        // addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.takerAsset), baseOrder.takingAmount);
-        // Add approvals for taker to allow rebalancer contract to transfer input tokens to treasurer
-        addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.makerAsset), baseOrder.makingAmount);
-
         // Record initial balances
         uint256 addrDaiBalanceBefore = dai.balanceOf(takerAddr);
         uint256 makerAddrDaiBalanceBefore = dai.balanceOf(makerAddr);
         uint256 addrWethBalanceBefore = weth.balanceOf(takerAddr);
         uint256 makerAddrWethBalanceBefore = weth.balanceOf(makerAddr);
-        uint256 treasurerAddrWethBalanceBefore = weth.balanceOf(treasurerAddr);
 
         // Fill the order
         vm.prank(takerAddr);
@@ -752,15 +638,11 @@ contract SwapExecutorTest is Test, Deployers {
         // Verify balance changes
         assertEq(dai.balanceOf(takerAddr), addrDaiBalanceBefore - takingAmount);
         assertEq(dai.balanceOf(makerAddr), makerAddrDaiBalanceBefore + takingAmount);
-        // Taker doesn't receive WETH because it's transferred to treasurer
-        assertEq(weth.balanceOf(takerAddr), addrWethBalanceBefore);
+        assertEq(weth.balanceOf(takerAddr), addrWethBalanceBefore + makingAmount);
         assertEq(weth.balanceOf(makerAddr), makerAddrWethBalanceBefore - makingAmount);
-
-        // Verify treasurer received the output tokens (WETH)
-        assertEq(weth.balanceOf(treasurerAddr), treasurerAddrWethBalanceBefore + makingAmount);
     }
 
-    function test_simple_order_without_extension_with_rebalancer() public {
+    function test_simple_order_without_extension() public {
         // Build a simple order without any extension data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 1,
@@ -773,9 +655,7 @@ contract SwapExecutorTest is Test, Deployers {
             makerTraits: OrderUtils.buildMakerTraits(address(0), false, true, true, false, false, 0, 0, 0)
         });
 
-        bytes memory postInteractionData = buildPostInteractionCalldata(address(rebalancerInteraction));
-
-        // Build order with only post-interaction
+        // Build order without extension data
         (OrderUtils.Order memory order, bytes memory extension) = OrderUtils.buildOrder(
             baseOrder,
             "", // makerAssetSuffix
@@ -785,7 +665,7 @@ contract SwapExecutorTest is Test, Deployers {
             "", // predicate
             "", // permit
             "", // preInteraction
-            postInteractionData, // postInteraction
+            "", // postInteraction
             "" // customData
         );
 
@@ -800,22 +680,10 @@ contract SwapExecutorTest is Test, Deployers {
             false, // skipMakerPermit
             false, // usePermit2
             "", // target
-            extension, // extension
+            "", // extension - empty
             "", // interaction
             0.99 ether // threshold
         );
-
-        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
-        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
-        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
-        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
-        // Add approvals for maker to allow rebalancer contract to transfer output tokens to treasurer
-        // addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.takerAsset), baseOrder.takingAmount);
-        // Add approvals for taker to allow rebalancer contract to transfer input tokens to treasurer
-        addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.makerAsset), baseOrder.makingAmount);
-
-        // Record initial balances
-        uint256 treasurerAddrWethBalanceBefore = weth.balanceOf(treasurerAddr);
 
         // Fill the order
         vm.prank(takerAddr);
@@ -826,15 +694,11 @@ contract SwapExecutorTest is Test, Deployers {
         // Check balances
         assertEq(dai.balanceOf(takerAddr), 996000000000000000000000, "takerAddr DAI balance");
         assertEq(dai.balanceOf(makerAddr), 1004000000000000000000000, "makerAddr DAI balance");
-        // Taker doesn't receive WETH because it's transferred to treasurer
-        assertEq(weth.balanceOf(takerAddr), 100000000000000000000, "takerAddr WETH balance");
+        assertEq(weth.balanceOf(takerAddr), 101000000000000000000, "takerAddr WETH balance");
         assertEq(weth.balanceOf(makerAddr), 99000000000000000000, "makerAddr WETH balance");
-
-        // Verify treasurer received the output tokens (WETH)
-        assertEq(weth.balanceOf(treasurerAddr), treasurerAddrWethBalanceBefore + 1 ether);
     }
 
-    function test_simple_order_with_different_amounts_with_rebalancer() public {
+    function test_simple_order_with_different_amounts() public {
         // Build a simple order without any extension data
         OrderUtils.Order memory baseOrder = OrderUtils.Order({
             salt: 2,
@@ -847,10 +711,8 @@ contract SwapExecutorTest is Test, Deployers {
             makerTraits: OrderUtils.buildMakerTraits(address(0), false, true, true, false, false, 0, 0, 0)
         });
 
-        bytes memory postInteractionData = buildPostInteractionCalldata(address(rebalancerInteraction));
-
-        // Build order with only post-interaction
-        (OrderUtils.Order memory order, bytes memory extension) = OrderUtils.buildOrder(
+        // Build order without extension data
+        (OrderUtils.Order memory order,) = OrderUtils.buildOrder(
             baseOrder,
             "", // makerAssetSuffix
             "", // takerAssetSuffix
@@ -859,7 +721,7 @@ contract SwapExecutorTest is Test, Deployers {
             "", // predicate
             "", // permit
             "", // preInteraction
-            postInteractionData, // postInteraction
+            "", // postInteraction
             "" // customData
         );
 
@@ -874,22 +736,10 @@ contract SwapExecutorTest is Test, Deployers {
             false, // skipMakerPermit
             false, // usePermit2
             "", // target
-            extension, // extension
+            "", // extension - empty
             "", // interaction
             0.49 ether // threshold
         );
-
-        // Add approvals for maker to allow swapExecutor contract to use input tokens for SWAP //TODO place this in the preintraction based on a flag
-        addApproval(makerAddr, address(swapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
-        // Add approvals for taker to allow swapExecutor contract to use output tokens for SWAP //TODO remove this once the swapExecutor has got the swap working
-        addApproval(takerAddr, address(swapExecutor), address(baseOrder.takerAsset), baseOrder.takingAmount);
-        // Add approvals for maker to allow rebalancer contract to transfer output tokens to treasurer
-        // addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.takerAsset), baseOrder.takingAmount);
-        // Add approvals for taker to allow rebalancer contract to transfer input tokens to treasurer
-        addApproval(takerAddr, address(rebalancerInteraction), address(baseOrder.makerAsset), baseOrder.makingAmount);
-
-        // Record initial balances
-        uint256 treasurerAddrWethBalanceBefore = weth.balanceOf(treasurerAddr);
 
         // Fill the order
         vm.prank(takerAddr);
@@ -900,79 +750,8 @@ contract SwapExecutorTest is Test, Deployers {
         // Check balances
         assertEq(dai.balanceOf(takerAddr), 998000000000000000000000, "takerAddr DAI balance");
         assertEq(dai.balanceOf(makerAddr), 1002000000000000000000000, "makerAddr DAI balance");
-        // Taker doesn't receive WETH because it's transferred to treasurer
-        assertEq(weth.balanceOf(takerAddr), 100000000000000000000, "takerAddr WETH balance");
+        assertEq(weth.balanceOf(takerAddr), 100500000000000000000, "takerAddr WETH balance");
         assertEq(weth.balanceOf(makerAddr), 99500000000000000000, "makerAddr WETH balance");
-
-        // Verify treasurer received the output tokens (WETH)
-        assertEq(weth.balanceOf(treasurerAddr), treasurerAddrWethBalanceBefore + 0.5 ether);
-    }
-
-    function test_rebalancer_transfer_failure() public {
-        // Test that order fails when transfer to treasurer fails
-        // This would happen if the taker doesn't have enough tokens or doesn't approve the transfer
-
-        // Setup a scenario where the taker doesn't approve the rebalancer contract
-        // We'll use a different taker address that doesn't have the proper approvals
-
-        address unauthorizedTaker = makeAddr("unauthorized");
-
-        // Give tokens to unauthorized taker
-        vm.deal(unauthorizedTaker, 1 ether);
-        vm.prank(unauthorizedTaker);
-        weth.deposit{value: 1 ether}();
-        // dai.mint(unauthorizedTaker, 4000 ether);
-        deal(address(dai), unauthorizedTaker, 4000 ether);
-
-        // Build a simple order
-        OrderUtils.Order memory baseOrder = OrderUtils.Order({
-            salt: 3,
-            maker: makerAddr,
-            receiver: address(0),
-            makerAsset: address(weth),
-            takerAsset: address(dai),
-            makingAmount: 1 ether,
-            takingAmount: 4000 ether,
-            makerTraits: OrderUtils.buildMakerTraits(address(0), false, true, true, false, false, 0, 0, 0)
-        });
-
-        bytes memory postInteractionData = buildPostInteractionCalldata(address(rebalancerInteraction));
-
-        (OrderUtils.Order memory order, bytes memory extension) = OrderUtils.buildOrder(
-            baseOrder,
-            "", // makerAssetSuffix
-            "", // takerAssetSuffix
-            "", // makingAmountData
-            "", // takingAmountData
-            "", // predicate
-            "", // permit
-            "", // preInteraction
-            postInteractionData, // postInteraction
-            "" // customData
-        );
-
-        // Sign the order
-        bytes32 orderData = swap.hashOrder(convertOrder(order));
-        (bytes32 r, bytes32 vs) = signOrder(makerPK, orderData);
-
-        // Build taker traits
-        OrderUtils.TakerTraits memory takerTraits = OrderUtils.buildTakerTraits(
-            false, // makingAmount
-            false, // unwrapWeth
-            false, // skipMakerPermit
-            false, // usePermit2
-            "", // target
-            extension, // extension
-            "", // interaction
-            0.99 ether // threshold
-        );
-
-        // Expect the transaction to revert due to transfer failure
-        vm.prank(unauthorizedTaker);
-        vm.expectRevert();
-        swap.fillOrderArgs(
-            convertOrder(order), r, vs, 4000 ether, TakerTraits.wrap(takerTraits.traits), takerTraits.args
-        );
     }
 
     // Helper function to convert OrderUtils.Order to IOrderMixin.Order

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.30;
 
 import {Test, console2} from "forge-std/Test.sol";
 import {MockERC20} from "solmate/src/test/utils/mocks/MockERC20.sol";
@@ -14,11 +14,13 @@ import {Permit2Deployer} from "test/helpers/Permit2.sol";
 import {LimitOrderProtocolDeployer} from "test/helpers/LimitOrderProtocolManager.sol";
 import {AggregatorMock} from "src/mocks/1inch/AggregatorMock.sol";
 import {Dispatcher} from "src/Dispatcher.sol";
-import {ChainLinkCalculator} from "src/ChainLinkCalculator.sol";
+import {OracleCalculator} from "src/OracleCalculator.sol";
 import {RebalancerInteraction} from "src/RebalancerInteraction.sol";
-import {SwapExecutor} from "src/SwapExecutor.sol";
 import {TychoSwapExecutor} from "src/TychoSwapExecutor.sol";
 import {TychoRouterTestSetup} from "test/tycho/TychoRouterTestSetup.sol";
+import {Compact} from "src/Compact.sol";
+import {CompactInteraction} from "src/CompactInteraction.sol";
+import {ResourceManager} from "src/ResourceManager.sol";
 
 contract Deployers is Test, TychoRouterTestSetup {
     // Helpful Test Constants
@@ -35,10 +37,12 @@ contract Deployers is Test, TychoRouterTestSetup {
     AggregatorMock public inchOracle;
     ILimitOrderProtocol public swap;
     Dispatcher public dispatcher;
-    ChainLinkCalculator public chainLinkCalculator;
+    OracleCalculator public oracleCalculator;
     RebalancerInteraction public rebalancerInteraction;
-    SwapExecutor public swapExecutor;
     TychoSwapExecutor public tychoSwapExecutor;
+    Compact public compact;
+    CompactInteraction public compactInteraction;
+    ResourceManager public resourceManager;
 
     // Test users - global variables
     address public makerAddr;
@@ -47,8 +51,12 @@ contract Deployers is Test, TychoRouterTestSetup {
     uint256 public takerPK;
     address public treasurerAddr; //TODO: Create a Treasurer contract
     uint256 public treasurerPK;
+    address public treasurer;
+    address public mockTheCompact;
 
     function setupUsers() internal {
+        treasurer = makeAddr("treasurer");
+        mockTheCompact = makeAddr("theCompact");
         (makerAddr, makerPK) = makeAddrAndKey("makerAddr");
         (takerAddr, takerPK) = makeAddrAndKey("takerAddr");
         (treasurerAddr, treasurerPK) = makeAddrAndKey("treasurerAddr");
@@ -80,6 +88,21 @@ contract Deployers is Test, TychoRouterTestSetup {
         weth.approve(address(swap), 1_000_000 ether);
         vm.prank(takerAddr);
         inch.approve(address(swap), 1_000_000 ether);
+
+        // Approve tokens for resource manager
+        vm.prank(makerAddr);
+        dai.approve(address(resourceManager), type(uint256).max);
+        vm.prank(makerAddr);
+        weth.approve(address(resourceManager), type(uint256).max);
+        vm.prank(makerAddr);
+        inch.approve(address(resourceManager), type(uint256).max);
+
+        vm.prank(takerAddr);
+        dai.approve(address(resourceManager), type(uint256).max);
+        vm.prank(takerAddr);
+        weth.approve(address(resourceManager), type(uint256).max);
+        vm.prank(takerAddr);
+        inch.approve(address(resourceManager), type(uint256).max);
     }
 
     function deploySwapTokens() internal {
@@ -121,10 +144,12 @@ contract Deployers is Test, TychoRouterTestSetup {
         inchOracle = new AggregatorMock(1000000000000000000);
         deployLimitOrderProtocol(address(weth));
         dispatcher = new Dispatcher();
-        chainLinkCalculator = new ChainLinkCalculator();
-        swapExecutor = new SwapExecutor(address(dispatcher));
+        oracleCalculator = new OracleCalculator();
         tychoSwapExecutor = new TychoSwapExecutor(address(dispatcher), payable(tychoRouter));
+        resourceManager = new ResourceManager(mockTheCompact, address(this));
+        compact = new Compact(address(resourceManager));
         setupUsers();
         rebalancerInteraction = new RebalancerInteraction(address(treasurerAddr));
+        compactInteraction = new CompactInteraction(treasurer, address(resourceManager), mockTheCompact);
     }
 }

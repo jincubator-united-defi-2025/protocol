@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.30;
 
 import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -10,7 +10,7 @@ import "@jincubator/limit-order-protocol/contracts/interfaces/IAmountGetter.sol"
 // solhint-disable not-rely-on-time
 
 /// @title A helper contract for interactions with https://docs.chain.link
-contract ChainLinkCalculator is IAmountGetter {
+contract OracleCalculator is IAmountGetter {
     using SafeCast for int256;
 
     error DifferentOracleDecimals();

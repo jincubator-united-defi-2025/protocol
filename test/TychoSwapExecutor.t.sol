@@ -5,7 +5,7 @@ import {Test, console2} from "forge-std/Test.sol";
 import "@jincubator/tycho-execution/foundry/src/executors/UniswapV4Executor.sol";
 import {TychoRouter} from "@jincubator/tycho-execution/foundry/src/TychoRouter.sol";
 import "@jincubator/tycho-execution/foundry/test/TychoRouterTestSetup.sol";
-import {ChainLinkCalculator} from "src/ChainLinkCalculator.sol";
+import {OracleCalculator} from "src/OracleCalculator.sol";
 import {Deployers} from "test/utils/Deployers.sol";
 import {OrderUtils} from "test/utils/orderUtils/OrderUtils.sol";
 // import {LimitOrderProtocol} from "@jincubator/limit-order-protocol/contracts/LimitOrderProtocol.sol";
@@ -119,8 +119,6 @@ contract TychoSwapExecutorTest is Test, Deployers {
             takingAmount: 2000 ether, // Updated to realistic market price
             makerTraits: OrderUtils.buildMakerTraits(address(0), false, true, true, false, false, 0, 0, 0)
         });
-
-        bytes memory takerInteractionData = buildTakerInteractionCalldata(address(swapExecutor));
 
         (OrderUtils.Order memory order, bytes memory extension) = OrderUtils.buildOrder(
             baseOrder,
