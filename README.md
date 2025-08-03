@@ -5,9 +5,9 @@
 This protocol implements four key enhancements to the [1inch Limit Order Protocol](https://github.com/1inch/limit-order-protocol):
 
 1. **Enhanced Swap Execution**: [TychoSwapExecutor.sol](./src/TychoSwapExecutor.sol) integrates [Tycho Execution](https://github.com/propeller-heads/tycho-execution) to enable complex swaps across multiple DEXs without upfront liquidity
-2. **Stop Loss and Profit Taking Orders**: Oracle-based pricing calculator for advanced order strategies
-3. **Treasury Management**: Rebalancer interaction for automated portfolio management
-4. **ERC-6909 Resource Locking**: Integration with [The Compact](https://github.com/uniswap/the-compact) for resource managemento
+2. **Stop Loss and Profit Taking Orders**: [OracleIntegration.sol](./src/OracleCalculator.sol) Oracle-based (starting with chainlink) pricing calculator for advanced order strategies
+3. **Treasury Management**: [RebalancerInteraction.sol](./src/RebalancerInteraction.sol) enables makers and takers to immediately balance their funds to a treasury (and moving forward more advanced asset management strategies).
+4. **ERC-6909 Resource Locking**: [CompactInteraction.sol](./src/CompactInteraction.sol) integrates the [1inch Limit Order Protocol](https://github.com/1inch/limit-order-protocol) with [The Compact](https://github.com/uniswap/the-compact) for [ERC-6909](https://eips.ethereum.org/EIPS/eip-6909) support and moving forward integration with additional cross chain intent standards such as [ERC-7683](https://www.erc7683.org/) leveraging [Mandates and Solver Payloads](https://www.jincubator.com/research/solving/protocol) and [Advanced Resource Locking](https://www.jincubator.com/research/solving/resources).
 
 ## Architecture
 
@@ -27,6 +27,11 @@ This protocol implements four key enhancements to the [1inch Limit Order Protoco
 - **Advanced Order Types**: Stop-loss and take-profit orders
 - **Treasury Management**: Automated portfolio rebalancing
 - **Oracle Integration**: Chainlink price feeds for accurate pricing
+
+### Key Technology Enhancements
+
+- Solidity based tests including a migration from `OrderUtils.js` to solidity based [OrderUtils](./test/utils/orderUtils/README_OrderUtils.md)
+- Solidity `^0.8.30` compatibility provided by creating an interface [ILimitOrderProtocol.sol](./src/interfaces/1inch/ILimitOrderProtocol.sol) and introducing [LimitOrderProtocolManager](./test/helpers/LimitOrderProtocolManager.sol) for testing.
 
 ## Quick Start
 
