@@ -145,6 +145,8 @@ library OrderUtils {
         if (allowMultipleFills) traits |= 1 << _ALLOW_MULTIPLE_FILLS_FLAG;
         if (!allowPartialFill) traits |= 1 << _NO_PARTIAL_FILLS_FLAG;
         if (shouldCheckEpoch) traits |= 1 << _NEED_EPOCH_CHECK_FLAG;
+        // if (preInteraction)) traits |= 1 << _NEED_PREINTERACTION_FLAG;
+        // 1 << _NEED_PREINTERACTION_FLAG;
         if (usePermit2) traits |= 1 << _USE_PERMIT2_FLAG;
 
         return traits;
