@@ -10,18 +10,25 @@ import {IWETH} from "@1inch/solidity-utils/contracts/interfaces/IWETH.sol";
 import {IPermit2} from "permit2/src/interfaces/IPermit2.sol";
 import {ILimitOrderProtocol} from "src/interfaces/1inch/ILimitOrderProtocol.sol";
 import {Permit2Deployer} from "test/helpers/Permit2.sol";
-import {LimitOrderProtocolDeployerNL} from "test/helpers/LimitOrderProtocolManagerNL.sol";
+import {LimitOrderProtocolDeployer} from "test/helpers/LimitOrderProtocolManager.sol";
 import {AggregatorMock} from "src/mocks/1inch/AggregatorMock.sol";
 import {Dispatcher} from "src/Dispatcher.sol";
 import {OracleCalculator} from "src/OracleCalculator.sol";
 import {RebalancerInteraction} from "src/RebalancerInteraction.sol";
-import {TychoSwapExecutor} from "src/TychoSwapExecutor.sol";
+import {TychoSwapExecutorDL} from "src/TychoSwapExecutorDL.sol";
 import {TychoRouterTestSetup} from "test/tycho/TychoRouterTestSetup.sol";
 import {Compact} from "src/Compact.sol";
 import {CompactInteraction} from "src/CompactInteraction.sol";
 import {ResourceManager} from "src/ResourceManager.sol";
 
-contract DeployersDemo is Test, TychoRouterTestSetup {
+/// @title DeployersDemoDL
+/// @notice DeployersDemoDL is a test contract that deploys the TychoSwapExecutorDL contract
+/// Taker interaction contract that executes the swap uses standard limit order protocol
+/// and requires taker to provide the fund for the input token up front
+/// DL stands for Double Liquidity as both maker and taker provide the input token for the swap
+/// @dev This contract is used to test the TychoSwapExecutorDL contract
+/// @dev This contract is used to test the TychoSwapExecutorDL contract
+contract DeployersDemoDL is Test, TychoRouterTestSetup {
     // Helpful Test Constants
     address constant ZERO_ADDRESS = address(0);
 
@@ -38,7 +45,7 @@ contract DeployersDemo is Test, TychoRouterTestSetup {
     Dispatcher public dispatcher;
     OracleCalculator public oracleCalculator;
     RebalancerInteraction public rebalancerInteraction;
-    TychoSwapExecutor public tychoSwapExecutor;
+    TychoSwapExecutorDL public tychoSwapExecutor;
     Compact public compact;
     CompactInteraction public compactInteraction;
     ResourceManager public resourceManager;
@@ -130,7 +137,7 @@ contract DeployersDemo is Test, TychoRouterTestSetup {
     }
 
     function deployLimitOrderProtocol(address weth) internal {
-        swap = ILimitOrderProtocol(address(LimitOrderProtocolDeployerNL.deploy(weth, address(permit2))));
+        swap = ILimitOrderProtocol(address(LimitOrderProtocolDeployer.deploy(weth, address(permit2))));
 
         vm.label(address(swap), "LimitOrderProtocol");
     }
@@ -144,7 +151,7 @@ contract DeployersDemo is Test, TychoRouterTestSetup {
         deployLimitOrderProtocol(address(weth));
         dispatcher = new Dispatcher();
         oracleCalculator = new OracleCalculator();
-        tychoSwapExecutor = new TychoSwapExecutor(address(dispatcher), payable(tychoRouter));
+        tychoSwapExecutor = new TychoSwapExecutorDL(address(dispatcher), payable(tychoRouter));
         resourceManager = new ResourceManager(mockTheCompact, address(this));
         compact = new Compact(address(resourceManager));
         setupUsers();

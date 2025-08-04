@@ -6,7 +6,7 @@ import "@jincubator/tycho-execution/foundry/src/executors/UniswapV4Executor.sol"
 import {TychoRouter} from "@jincubator/tycho-execution/foundry/src/TychoRouter.sol";
 import "@jincubator/tycho-execution/foundry/test/TychoRouterTestSetup.sol";
 import {OracleCalculator} from "src/OracleCalculator.sol";
-import {DeployersDemo} from "test/utils/DeployersDemo.sol";
+import {DeployersDemoDL} from "test/utils/DeployersDemoDL.sol";
 import {OrderUtils} from "test/utils/orderUtils/OrderUtils.sol";
 import {AggregatorMock} from "src/mocks/1inch/AggregatorMock.sol";
 import {MockERC20} from "solmate/src/test/utils/mocks/MockERC20.sol";
@@ -17,7 +17,7 @@ import {MakerTraits} from "@jincubator/limit-order-protocol/contracts/libraries/
 import {TakerTraits} from "@jincubator/limit-order-protocol/contracts/libraries/TakerTraitsLib.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract TychoSwapExecutorDemoTest is Test, DeployersDemo {
+contract TychoSwapExecutorDemoTestDL is Test, DeployersDemoDL {
     using OrderUtils for *;
 
     // Flag constants for MakerTraits
@@ -79,7 +79,7 @@ contract TychoSwapExecutorDemoTest is Test, DeployersDemo {
         return tychoSwap;
     }
 
-    function test_demo_tychoSwapExecutor() public {
+    function test_demo_DL_tychoSwapExecutor() public {
         // Log addresses
         console2.log("+++++++++++++++++ Addresses +++++++++++++++++");
         console2.log("LimitOrderProtocol Address    :", address(swap));
@@ -136,7 +136,7 @@ contract TychoSwapExecutorDemoTest is Test, DeployersDemo {
 
         // Add approval for tychoSwapExecutor to spend inputToken from makerAddr (needed for the swap)
         addApproval(makerAddr, address(tychoSwapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
-        // addApproval(makerAddr, address(swap), address(baseOrder.makerAsset), baseOrder.makingAmount);
+        addApproval(makerAddr, address(swap), address(baseOrder.makerAsset), baseOrder.makingAmount);
         // Add approval for maker to receive outputToken from takerAddr (executed by LIMIT_ORDER_PROTOCOL to give back to maker)
         addApproval(takerAddr, address(tychoSwapExecutor), address(baseOrder.makerAsset), baseOrder.makingAmount);
         addApproval(takerAddr, address(makerAddr), address(baseOrder.takerAsset), baseOrder.takingAmount);

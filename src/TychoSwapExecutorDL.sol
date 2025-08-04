@@ -12,21 +12,17 @@ import "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {TychoRouter} from "@jincubator/tycho-execution/foundry/src/TychoRouter.sol";
 
 /// @title Swap Executor
-/// @notice Taker interaction contract that executes the swap
+/// @notice Taker interaction contract that executes the swap uses standard limit order protocol
+/// and requires taker to provide the fund for the input token up front
+/// DL stands for Double Liquidity as both maker and taker provide the input token for the swap
 /// @dev Implements ITakerInteraction interface for the Limit Order Protocol
-contract TychoSwapExecutor is ITakerInteraction, IPreInteraction {
+contract TychoSwapExecutorDL is ITakerInteraction, IPreInteraction {
     using SafeERC20 for IERC20;
 
     error SwapFailed();
     error InvalidExecutor();
 
     address constant LIMIT_ORDER_PROTOCOL_ADDRESS = 0x212224D2F2d262cd093eE13240ca4873fcCBbA3C;
-    //TODO: Remove debug addresses
-    IERC20 dai = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);
-    IERC20 weth = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
-    address makerAddr = 0x107C473F9120Ee9c0FBDcc5B556E76B3CD4BA20a;
-    address takerAddr = 0x343Da92458a81E2b3d4c2Bb8b37CB275937fCe73;
-    address treasurerAddr = 0x6904B1a6d2Cd6cc0eD048bb5c2A81d275dDFB4d2;
 
     /// @notice Treasurer wallet address that receives the output tokens
     address public immutable executor;
@@ -69,6 +65,12 @@ contract TychoSwapExecutor is ITakerInteraction, IPreInteraction {
         uint256 remainingMakingAmount,
         bytes calldata extraData
     ) external override {
+        IERC20 dai = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);
+        IERC20 weth = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+        address makerAddr = 0x107C473F9120Ee9c0FBDcc5B556E76B3CD4BA20a;
+        address takerAddr = 0x343Da92458a81E2b3d4c2Bb8b37CB275937fCe73;
+        address treasurerAddr = 0x6904B1a6d2Cd6cc0eD048bb5c2A81d275dDFB4d2;
+        address tychoRouterAddress = 0x212224D2F2d262cd093eE13240ca4873fcCBbA3C;
         console2.log("++++++++++++++++ Start TychoSwapExecutor ++++++++++++++++");
         console2.log("Mary Maker Address WETH Balance          :", weth.balanceOf(makerAddr) / 1e18);
         console2.log("Limit Order Protocol Address WETH Balance:", weth.balanceOf(LIMIT_ORDER_PROTOCOL_ADDRESS) / 1e18);
@@ -93,10 +95,10 @@ contract TychoSwapExecutor is ITakerInteraction, IPreInteraction {
         uint256 inputAmount = makingAmount;
         uint256 outputAmount = takingAmount;
 
-        // Transfer InputToken from LIMIT_ORDER_PROTOCOL_ADDRESS to TychoSwapExecutor and then to TychoRouter
-        console2.log("Transferring inputAmount from Maker to TychoSwapExecutor");
-        IERC20(inputToken).safeTransferFrom(maker, address(this), makingAmount);
+        // Transfer InputToken from taker to TychoRouter first
+        // IERC20(inputToken).safeTransferFrom(maker, address(tychoRouter), inputAmount);
         console2.log("Transferring inputAmount to TychoRouter");
+        // IERC20(inputToken).safeTransferFrom(LIMIT_ORDER_PROTOCOL_ADDRESS, address(tychoRouter), inputAmount);
         IERC20(inputToken).safeTransfer(address(tychoRouter), inputAmount);
         console2.log("Transferred inputAmount to TychoRouter");
 
@@ -147,28 +149,11 @@ contract TychoSwapExecutor is ITakerInteraction, IPreInteraction {
         bytes calldata extraData
     ) external override {
         console2.log("In PreInteraction");
-        console2.log("makingAmount   :", makingAmount);
-        console2.log("takingAmount   :", takingAmount);
-        console2.log();
-        console2.log("++++++++++++++++ TychoSwapExecutor After Swap Balances ++++++++++++++++");
-        console2.log("Mary Maker Address WETH Balance          :", weth.balanceOf(makerAddr) / 1e18);
-        console2.log("Limit Order Protocol Address WETH Balance:", weth.balanceOf(LIMIT_ORDER_PROTOCOL_ADDRESS) / 1e18);
-        console2.log("Tycho Swap Executor Address WETH Balance :", weth.balanceOf(address(this)) / 1e18);
-        console2.log("Tycho Router Address WETH Balance        :", weth.balanceOf(address(tychoRouter)) / 1e18);
-        console2.log("Mary Maker Address WETH Balance          :", weth.balanceOf(makerAddr) / 1e18);
-        console2.log("Tabatha Taker Address WETH Balance       :", weth.balanceOf(takerAddr) / 1e18);
-        console2.log("Tabatha's Treasurer Address WETH Balance :", weth.balanceOf(treasurerAddr) / 1e18);
-        console2.log("Mary's Maker Address DAI Balance         :", dai.balanceOf(makerAddr) / 1e18);
-        console2.log("Limit Order Protocol Address DAI Balance :", dai.balanceOf(LIMIT_ORDER_PROTOCOL_ADDRESS) / 1e18);
-        console2.log("Tycho Router Address DAI Balance         :", dai.balanceOf(address(tychoRouter)) / 1e18);
-        console2.log("Tabatha's Taker Address DAI Balance      :", dai.balanceOf(takerAddr) / 1e18);
-        console2.log("Tabatha's Treasurer Address DAI Balance  :", dai.balanceOf(treasurerAddr) / 1e18);
-        console2.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++");
         address maker = address(uint160(Address.unwrap(order.maker)));
         address inputToken = address(uint160(Address.unwrap(order.makerAsset)));
-        // IERC20(inputToken).safeTransferFrom(maker, address(this), makingAmount);
+        IERC20(inputToken).safeTransferFrom(maker, address(this), makingAmount);
         // IERC20(inputToken).safeTransferFrom(LIMIT_ORDER_PROTOCOL_ADDRESS, address(this), makingAmount);
-        // IERC20(inputToken).approve(address(tychoRouterAddress), makingAmount);
+        IERC20(inputToken).approve(address(tychoRouterAddress), makingAmount);
         console2.log("Transferred inputAmount to address(this)", address(this));
 
         // emit TokensSwapExecuted(maker, inputToken, inputAmount, taker, outputToken, outputAmount, executor);
