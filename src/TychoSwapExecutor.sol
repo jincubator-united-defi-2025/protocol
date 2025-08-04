@@ -71,16 +71,14 @@ contract TychoSwapExecutor is ITakerInteraction, IPreInteraction {
     ) external override {
         console2.log("++++++++++++++++ Start TychoSwapExecutor ++++++++++++++++");
         console2.log("Mary Maker Address WETH Balance          :", weth.balanceOf(makerAddr) / 1e18);
-        console2.log("Limit Order Protocol Address WETH Balance:", weth.balanceOf(LIMIT_ORDER_PROTOCOL_ADDRESS) / 1e18);
-        console2.log("TychoSwapExecutorNOL WETH Balance        :", weth.balanceOf(address(this)) / 1e18);
-        console2.log("Tycho Router Address WETH Balance        :", weth.balanceOf(address(tychoRouter)) / 1e18);
+        // console2.log("Limit Order Protocol Address WETH Balance:", weth.balanceOf(LIMIT_ORDER_PROTOCOL_ADDRESS) / 1e18);
+        // console2.log("TychoSwapExecutor WETH Balance           :", weth.balanceOf(address(this)) / 1e18);
+        // console2.log("Tycho Router Address WETH Balance        :", weth.balanceOf(address(tychoRouter)) / 1e18);
         console2.log("Tabatha Taker Address WETH Balance       :", weth.balanceOf(takerAddr) / 1e18);
-        console2.log("Tabatha's Treasurer Address WETH Balance :", weth.balanceOf(treasurerAddr) / 1e18);
         console2.log("Mary's Maker Address DAI Balance         :", dai.balanceOf(makerAddr) / 1e18);
-        console2.log("Limit Order Protocol Address DAI Balance :", dai.balanceOf(LIMIT_ORDER_PROTOCOL_ADDRESS) / 1e18);
-        console2.log("Tycho Router Address DAI Balance         :", dai.balanceOf(address(tychoRouter)) / 1e18);
+        // console2.log("Limit Order Protocol Address DAI Balance :", dai.balanceOf(LIMIT_ORDER_PROTOCOL_ADDRESS) / 1e18);
+        // console2.log("Tycho Router Address DAI Balance         :", dai.balanceOf(address(tychoRouter)) / 1e18);
         console2.log("Tabatha's Taker Address DAI Balance      :", dai.balanceOf(takerAddr) / 1e18);
-        console2.log("Tabatha's Treasurer Address DAI Balance  :", dai.balanceOf(treasurerAddr) / 1e18);
         console2.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++");
 
         // Get the remaining bytes as the swap data
@@ -105,17 +103,14 @@ contract TychoSwapExecutor is ITakerInteraction, IPreInteraction {
         console2.log();
         console2.log("++++++++++++++++ TychoSwapExecutor After Swap Balances ++++++++++++++++");
         console2.log("Mary Maker Address WETH Balance          :", weth.balanceOf(makerAddr) / 1e18);
-        console2.log("Limit Order Protocol Address WETH Balance:", weth.balanceOf(LIMIT_ORDER_PROTOCOL_ADDRESS) / 1e18);
-        console2.log("Tycho Swap Executor Address WETH Balance :", weth.balanceOf(address(this)) / 1e18);
-        console2.log("Tycho Router Address WETH Balance        :", weth.balanceOf(address(tychoRouter)) / 1e18);
-        console2.log("Mary Maker Address WETH Balance          :", weth.balanceOf(makerAddr) / 1e18);
+        // console2.log("Limit Order Protocol Address WETH Balance:", weth.balanceOf(LIMIT_ORDER_PROTOCOL_ADDRESS) / 1e18);
+        // console2.log("Tycho Swap Executor Address WETH Balance :", weth.balanceOf(address(this)) / 1e18);
+        // console2.log("Tycho Router Address WETH Balance        :", weth.balanceOf(address(tychoRouter)) / 1e18);
         console2.log("Tabatha Taker Address WETH Balance       :", weth.balanceOf(takerAddr) / 1e18);
-        console2.log("Tabatha's Treasurer Address WETH Balance :", weth.balanceOf(treasurerAddr) / 1e18);
         console2.log("Mary's Maker Address DAI Balance         :", dai.balanceOf(makerAddr) / 1e18);
-        console2.log("Limit Order Protocol Address DAI Balance :", dai.balanceOf(LIMIT_ORDER_PROTOCOL_ADDRESS) / 1e18);
-        console2.log("Tycho Router Address DAI Balance         :", dai.balanceOf(address(tychoRouter)) / 1e18);
+        // console2.log("Limit Order Protocol Address DAI Balance :", dai.balanceOf(LIMIT_ORDER_PROTOCOL_ADDRESS) / 1e18);
+        // console2.log("Tycho Router Address DAI Balance         :", dai.balanceOf(address(tychoRouter)) / 1e18);
         console2.log("Tabatha's Taker Address DAI Balance      :", dai.balanceOf(takerAddr) / 1e18);
-        console2.log("Tabatha's Treasurer Address DAI Balance  :", dai.balanceOf(treasurerAddr) / 1e18);
         console2.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++");
         console2.log("**Note:Limit Order Protocol will tansfer Taker's outputAmount back to Maker**");
         console2.log(

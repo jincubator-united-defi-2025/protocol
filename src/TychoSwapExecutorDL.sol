@@ -74,7 +74,7 @@ contract TychoSwapExecutorDL is ITakerInteraction, IPreInteraction {
         console2.log("++++++++++++++++ Start TychoSwapExecutor ++++++++++++++++");
         console2.log("Mary Maker Address WETH Balance          :", weth.balanceOf(makerAddr) / 1e18);
         console2.log("Limit Order Protocol Address WETH Balance:", weth.balanceOf(LIMIT_ORDER_PROTOCOL_ADDRESS) / 1e18);
-        console2.log("TychoSwapExecutorNOL WETH Balance        :", weth.balanceOf(address(this)) / 1e18);
+        console2.log("TychoSwapExecutorDL WETH Balance         :", weth.balanceOf(address(this)) / 1e18);
         console2.log("Tycho Router Address WETH Balance        :", weth.balanceOf(address(tychoRouter)) / 1e18);
         console2.log("Mary Maker Address WETH Balance          :", weth.balanceOf(makerAddr) / 1e18);
         console2.log("Tabatha Taker Address WETH Balance       :", weth.balanceOf(takerAddr) / 1e18);

@@ -68,7 +68,7 @@ contract DeployersDemoDL is Test, TychoRouterTestSetup {
         (treasurerAddr, treasurerPK) = makeAddrAndKey("treasurerAddr");
         // Mint tokens to test addresses
         // deal(address(dai), takerAddr, 1_000_000 ether);
-        deal(address(dai), makerAddr, 1 ether);
+        // deal(address(dai), makerAddr, 1 ether);
         // deal(address(inch), takerAddr, 1_000_000 ether);
         // deal(address(inch), makerAddr, 1_000_000 ether);
 

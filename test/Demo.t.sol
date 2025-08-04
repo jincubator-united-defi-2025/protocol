@@ -80,6 +80,16 @@ contract TychoSwapExecutorDemoTest is Test, DeployersDemo {
     }
 
     function test_demo_tychoSwapExecutor() public {
+        console2.log("+++++++++++++++++ TychoSwapExecutor Demo ++++++++++++++++++++++++++");
+        console2.log("*** Mary Maker wants to swap 1 WETH for 2000 DAI                ***");
+        console2.log("*** Mary Maker approves 1 WETH for the TychoSwapExecutor        ***");
+        console2.log("*** Tabatha Taker using Tycho can swap 1WETH for 2018 DAI       ***");
+        console2.log("*** This is done using TychoSwapExecutor TakerInteraction       ***");
+        console2.log("*** TychoSwapExecutor transfers 1 WETH from Mary to TychoRouter ***");
+        console2.log("*** TychoRouter will swap 1 WETH for 2018 DAI for the taker     ***");
+        console2.log("*** Limit Order Protocol will transfer 2000 DAI to Maker        ***");
+        console2.log("+++++++++++++++++ TychoSwapExecutor Demo ++++++++++++++++++++++++++");
+        console2.log();
         // Log addresses
         console2.log("+++++++++++++++++ Addresses +++++++++++++++++");
         console2.log("LimitOrderProtocol Address    :", address(swap));
@@ -87,7 +97,6 @@ contract TychoSwapExecutorDemoTest is Test, DeployersDemo {
         console2.log("TychoRouter Address           :", address(tychoRouter));
         console2.log("Mary Maker Address            :", makerAddr);
         console2.log("Tabatha Taker Address         :", takerAddr);
-        console2.log("Tabatha's Treasurer Address   :", treasurerAddr);
         console2.log("WETH Address                  :", address(weth));
         console2.log("DAI Address                   :", address(dai));
         console2.log("+++++++++++++++++ End of Addresses +++++++++++++++++");
@@ -95,10 +104,8 @@ contract TychoSwapExecutorDemoTest is Test, DeployersDemo {
         console2.log("++++++++++++++++ Starting Balances +++++++++++++++++");
         console2.log("Mary Maker Address WETH Balance          :", weth.balanceOf(makerAddr) / 1e18);
         console2.log("Tabatha Taker Address WETH Balance       :", weth.balanceOf(takerAddr) / 1e18);
-        console2.log("Tabatha's Treasurer Address WETH Balance :", weth.balanceOf(treasurerAddr) / 1e18);
         console2.log("Mary's Maker Address DAI Balance         :", dai.balanceOf(makerAddr) / 1e18);
         console2.log("Tabatha's Taker Address DAI Balance      :", dai.balanceOf(takerAddr) / 1e18);
-        console2.log("Tabatha's Treasurer Address DAI Balance  :", dai.balanceOf(treasurerAddr) / 1e18);
         console2.log("+++++++++++++ End of Starting Balances +++++++++++++");
 
         // Build order with original maker (like ApprovalPreInteraction example)
@@ -194,10 +201,8 @@ contract TychoSwapExecutorDemoTest is Test, DeployersDemo {
         console2.log("++++++++++++++++ Ending Balances ++++++++++++++++");
         console2.log("Mary Maker Address WETH Balance          :", weth.balanceOf(makerAddr) / 1e18);
         console2.log("Tabatha Taker Address WETH Balance       :", weth.balanceOf(takerAddr) / 1e18);
-        console2.log("Tabatha's Treasurer Address WETH Balance :", weth.balanceOf(treasurerAddr) / 1e18);
         console2.log("Mary's Maker Address DAI Balance         :", dai.balanceOf(makerAddr) / 1e18);
         console2.log("Tabatha's Taker Address DAI Balance      :", dai.balanceOf(takerAddr) / 1e18);
-        console2.log("Tabatha's Treasurer Address DAI Balance  :", dai.balanceOf(treasurerAddr) / 1e18);
         console2.log("+++++++++++++ End of Ending  Balances +++++++++++++");
     }
 }
