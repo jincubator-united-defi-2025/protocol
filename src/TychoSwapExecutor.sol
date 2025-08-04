@@ -74,7 +74,6 @@ contract TychoSwapExecutor is ITakerInteraction, IPreInteraction {
         console2.log("Limit Order Protocol Address WETH Balance:", weth.balanceOf(LIMIT_ORDER_PROTOCOL_ADDRESS) / 1e18);
         console2.log("TychoSwapExecutorNOL WETH Balance        :", weth.balanceOf(address(this)) / 1e18);
         console2.log("Tycho Router Address WETH Balance        :", weth.balanceOf(address(tychoRouter)) / 1e18);
-        console2.log("Mary Maker Address WETH Balance          :", weth.balanceOf(makerAddr) / 1e18);
         console2.log("Tabatha Taker Address WETH Balance       :", weth.balanceOf(takerAddr) / 1e18);
         console2.log("Tabatha's Treasurer Address WETH Balance :", weth.balanceOf(treasurerAddr) / 1e18);
         console2.log("Mary's Maker Address DAI Balance         :", dai.balanceOf(makerAddr) / 1e18);
@@ -94,21 +93,15 @@ contract TychoSwapExecutor is ITakerInteraction, IPreInteraction {
         uint256 outputAmount = takingAmount;
 
         // Transfer InputToken from LIMIT_ORDER_PROTOCOL_ADDRESS to TychoSwapExecutor and then to TychoRouter
-        console2.log("Transferring inputAmount from Maker to TychoSwapExecutor");
-        IERC20(inputToken).safeTransferFrom(maker, address(this), makingAmount);
-        console2.log("Transferring inputAmount to TychoRouter");
-        IERC20(inputToken).safeTransfer(address(tychoRouter), inputAmount);
-        console2.log("Transferred inputAmount to TychoRouter");
-
+        console2.log("makingAmount   :", makingAmount / 1e18);
+        console2.log("takingAmount   :", takingAmount / 1e18);
+        console2.log("***Note: Transferring inputAmount from Maker to TychoSwapRouter***");
+        IERC20(inputToken).safeTransferFrom(maker, address(tychoRouter), makingAmount);
+        console2.log("***Note: Executing Swap using TychoRouter***");
         uint256 amountOut =
             tychoRouter.singleSwap(inputAmount, inputToken, outputToken, 1, false, false, taker, false, tychoSwap);
-
-        // Transfer Output from taker to LIMIT_ORDER_PROTOCOL_ADDRESS (which will then give the outputAmount amount back to maker)
-        // amountOut : 2018817438608734439722
-        //
-        // IERC20(inputToken).safeTransferFrom(taker, maker, inputAmount);
-        console2.log("amountOut   :", amountOut);
-        console2.log("outputAmount:", outputAmount);
+        console2.log("Swap Output amount   :", amountOut / 1e18);
+        // console2.log("outputAmount:", outputAmount);
         console2.log();
         console2.log("++++++++++++++++ TychoSwapExecutor After Swap Balances ++++++++++++++++");
         console2.log("Mary Maker Address WETH Balance          :", weth.balanceOf(makerAddr) / 1e18);
@@ -124,6 +117,10 @@ contract TychoSwapExecutor is ITakerInteraction, IPreInteraction {
         console2.log("Tabatha's Taker Address DAI Balance      :", dai.balanceOf(takerAddr) / 1e18);
         console2.log("Tabatha's Treasurer Address DAI Balance  :", dai.balanceOf(treasurerAddr) / 1e18);
         console2.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++");
+        console2.log("**Note:Limit Order Protocol will tansfer Taker's outputAmount back to Maker**");
+        console2.log(
+            "**Note:Limit Order Protocol logic modified not to transfer Makers funds to Taker as TychoSwapExecutor has already transferred Taker's outputAmount back to Maker**"
+        );
 
         emit TokensSwapExecuted(maker, inputToken, inputAmount, taker, outputToken, outputAmount, executor);
     }
@@ -145,34 +142,7 @@ contract TychoSwapExecutor is ITakerInteraction, IPreInteraction {
         uint256 takingAmount,
         uint256 remainingMakingAmount,
         bytes calldata extraData
-    ) external override {
-        console2.log("In PreInteraction");
-        console2.log("makingAmount   :", makingAmount);
-        console2.log("takingAmount   :", takingAmount);
-        console2.log();
-        console2.log("++++++++++++++++ TychoSwapExecutor After Swap Balances ++++++++++++++++");
-        console2.log("Mary Maker Address WETH Balance          :", weth.balanceOf(makerAddr) / 1e18);
-        console2.log("Limit Order Protocol Address WETH Balance:", weth.balanceOf(LIMIT_ORDER_PROTOCOL_ADDRESS) / 1e18);
-        console2.log("Tycho Swap Executor Address WETH Balance :", weth.balanceOf(address(this)) / 1e18);
-        console2.log("Tycho Router Address WETH Balance        :", weth.balanceOf(address(tychoRouter)) / 1e18);
-        console2.log("Mary Maker Address WETH Balance          :", weth.balanceOf(makerAddr) / 1e18);
-        console2.log("Tabatha Taker Address WETH Balance       :", weth.balanceOf(takerAddr) / 1e18);
-        console2.log("Tabatha's Treasurer Address WETH Balance :", weth.balanceOf(treasurerAddr) / 1e18);
-        console2.log("Mary's Maker Address DAI Balance         :", dai.balanceOf(makerAddr) / 1e18);
-        console2.log("Limit Order Protocol Address DAI Balance :", dai.balanceOf(LIMIT_ORDER_PROTOCOL_ADDRESS) / 1e18);
-        console2.log("Tycho Router Address DAI Balance         :", dai.balanceOf(address(tychoRouter)) / 1e18);
-        console2.log("Tabatha's Taker Address DAI Balance      :", dai.balanceOf(takerAddr) / 1e18);
-        console2.log("Tabatha's Treasurer Address DAI Balance  :", dai.balanceOf(treasurerAddr) / 1e18);
-        console2.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        address maker = address(uint160(Address.unwrap(order.maker)));
-        address inputToken = address(uint160(Address.unwrap(order.makerAsset)));
-        // IERC20(inputToken).safeTransferFrom(maker, address(this), makingAmount);
-        // IERC20(inputToken).safeTransferFrom(LIMIT_ORDER_PROTOCOL_ADDRESS, address(this), makingAmount);
-        // IERC20(inputToken).approve(address(tychoRouterAddress), makingAmount);
-        console2.log("Transferred inputAmount to address(this)", address(this));
-
-        // emit TokensSwapExecuted(maker, inputToken, inputAmount, taker, outputToken, outputAmount, executor);
-    }
+    ) external override {}
 
     /**
      * @notice Checks if orderHash signature was signed with real order maker.

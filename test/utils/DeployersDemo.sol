@@ -61,15 +61,15 @@ contract DeployersDemo is Test, TychoRouterTestSetup {
         (treasurerAddr, treasurerPK) = makeAddrAndKey("treasurerAddr");
         // Mint tokens to test addresses
         // deal(address(dai), takerAddr, 1_000_000 ether);
-        deal(address(dai), makerAddr, 1 ether);
+        // deal(address(dai), makerAddr, 1 ether);
         // deal(address(inch), takerAddr, 1_000_000 ether);
         // deal(address(inch), makerAddr, 1_000_000 ether);
 
         // Setup WETH deposits
-        vm.deal(makerAddr, 2 ether);
+        vm.deal(makerAddr, 1 ether);
         // vm.deal(takerAddr, 100 ether);
         vm.prank(makerAddr);
-        weth.deposit{value: 2 ether}();
+        weth.deposit{value: 1 ether}();
         // vm.prank(takerAddr);
         // weth.deposit{value: 100 ether}();
 
